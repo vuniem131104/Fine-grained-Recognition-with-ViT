@@ -1,0 +1,101 @@
+version: "3.9"
+
+networks:
+  aide1:
+    driver: bridge
+
+services:
+  postgres:
+    image: postgres:15
+    container_name: mlflow-postgres
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      POSTGRES_DB: ${POSTGRES_DB}
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    ports:
+      - "5432:5432"
+    networks:
+      - aide1
+
+  minio:
+    image: minio/minio
+    container_name: mlflow-minio
+    command: server /data --console-address ":9001"
+    environment:
+      MINIO_ROOT_USER: ${MINIO_ROOT_USER}
+      MINIO_ROOT_PASSWORD: ${MINIO_ROOT_PASSWORD}
+    ports:
+      - "9000:9000"
+      - "9001:9001"
+    volumes:
+      - minio_data:/data
+    networks:
+      - aide1
+
+  mlflow:
+    build:
+      context: ./src/mlflow
+    container_name: mlflow-server
+    depends_on:
+      - postgres
+      - minio
+    environment:
+      MLFLOW_TRACKING_URI: ${MLFLOW_TRACKING_URI}
+      AWS_ACCESS_KEY_ID: ${MINIO_ROOT_USER}
+      AWS_SECRET_ACCESS_KEY: ${MINIO_ROOT_PASSWORD}
+      MLFLOW_S3_ENDPOINT_URL: ${MLFLOW_S3_ENDPOINT_URL}
+    command: >
+      mlflow server
+      --backend-store-uri postgresql://${POSTGRES_USER}:${POSTGRES_PASSWORD}@${POSTGRES_HOST}:${POSTGRES_PORT}/${POSTGRES_DB}
+      --default-artifact-root s3://${MINIO_BUCKET}/
+      --host 0.0.0.0
+      --port 5000
+      --allowed-hosts "*"
+    ports:
+      - "5000:5000"
+    networks:
+      - aide1
+
+  serving:
+    build:
+      context: .
+      dockerfile: ./src/serving/Dockerfile
+    container_name: inference-layer
+    volumes:
+      - type: bind
+        source: ./src/serving
+        target: /app
+      - type: bind
+        source: ./data/CUB_200_2011/classes.txt
+        read_only: true
+      - /app/.venv
+    depends_on:
+      - mlflow
+    environment:
+      MLFLOW_TRACKING_URI: ${MLFLOW_TRACKING_URI}
+      AWS_ACCESS_KEY_ID: ${MINIO_ROOT_USER}
+      AWS_SECRET_ACCESS_KEY: ${MINIO_ROOT_PASSWORD}
+      MLFLOW_S3_ENDPOINT_URL: ${MLFLOW_S3_ENDPOINT_URL}
+      MLFLOW_EXPERIMENT_NAME: ${MLFLOW_EXPERIMENT_NAME}
+    ports:
+      - "8000:8000"
+    networks:
+      - aide1
+
+  nginx:
+    image: nginx:alpine
+    container_name: nginx_gateway
+    ports:
+      - "8080:80"
+    volumes:
+      - ./src/nginx/nginx.conf:/etc/nginx/nginx.conf:ro
+    depends_on:
+      - serving
+    networks:
+      - aide1
+
+volumes:
+  postgres_data:
+  minio_data:

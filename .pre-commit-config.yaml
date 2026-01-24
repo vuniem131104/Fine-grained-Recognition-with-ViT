@@ -1,0 +1,64 @@
+repos:
+-   repo: https://github.com/pre-commit/pre-commit-hooks
+    rev: v4.5.0
+    hooks:
+    -   id: trailing-whitespace
+    -   id: end-of-file-fixer
+    -   id: check-yaml
+    -   id: debug-statements
+    -   id: double-quote-string-fixer
+    -   id: name-tests-test
+        args: [--pytest-test-first]
+    -   id: requirements-txt-fixer
+-   repo: https://github.com/asottile/setup-cfg-fmt
+    rev: v2.7.0
+    hooks:
+    -   id: setup-cfg-fmt
+-   repo: https://github.com/asottile/reorder-python-imports
+    rev: v3.14.0
+    hooks:
+    -   id: reorder-python-imports
+        exclude: ^(pre_commit/resources/|testing/resources/python3_hooks_repo/|migration/|scripts/utils/)
+        args: [--py38-plus, --add-import, 'from __future__ import annotations', '--application-directories', 'backend']
+-   repo: https://github.com/asottile/add-trailing-comma
+    rev: v3.1.0
+    hooks:
+    -   id: add-trailing-comma
+-   repo: https://github.com/asottile/pyupgrade
+    rev: v3.19.0
+    hooks:
+    -   id: pyupgrade
+        args: [--py38-plus, --keep-runtime-typing]
+-   repo: https://github.com/hhatto/autopep8
+    rev: v2.3.1
+    hooks:
+    -   id: autopep8
+        exclude: ^migration/|^scripts/utils/|^tests/|.*/__init__.py
+-   repo: https://github.com/PyCQA/flake8
+    rev: 7.1.1
+    hooks:
+    -   id: flake8
+        exclude: ^scripts/utils/|^tests/|.*/__init__.py
+-   repo: https://github.com/pre-commit/mirrors-mypy
+    rev: v1.13.0
+    hooks:
+    -   id: mypy
+        additional_dependencies: [types-pyyaml, types-requests]
+        exclude: ^test/resources/|^migration/|.*/__init__.py
+-   repo: https://github.com/astral-sh/ruff-pre-commit
+    # Ruff version.
+    rev: v0.7.2
+    hooks:
+        # Run the linter.
+        - id: ruff
+          args: ["--exclude", "*/__init__.py, */tests/*"]
+-   repo: https://github.com/astral-sh/uv-pre-commit
+    # uv version.
+    rev: 0.8.3
+    hooks:
+      - id: uv-lock
+-   repo: https://github.com/astral-sh/uv-pre-commit
+    # uv version.
+    rev: 0.8.3
+    hooks:
+      - id: uv-export
