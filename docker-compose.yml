@@ -36,7 +36,7 @@ services:
 
   mlflow:
     build:
-      context: ./src/mlflow
+      context: ./services/mlflow
     container_name: mlflow-server
     depends_on:
       - postgres
@@ -61,16 +61,8 @@ services:
   serving:
     build:
       context: .
-      dockerfile: ./src/serving/Dockerfile
+      dockerfile: ./services/serving/src/serving/Dockerfile
     container_name: inference-layer
-    volumes:
-      - type: bind
-        source: ./src/serving
-        target: /app
-      - type: bind
-        source: ./data/CUB_200_2011/classes.txt
-        read_only: true
-      - /app/.venv
     depends_on:
       - mlflow
     environment:
@@ -90,7 +82,7 @@ services:
     ports:
       - "8080:80"
     volumes:
-      - ./src/nginx/nginx.conf:/etc/nginx/nginx.conf:ro
+      - ./services/nginx/nginx.conf:/etc/nginx/nginx.conf:ro
     depends_on:
       - serving
     networks:

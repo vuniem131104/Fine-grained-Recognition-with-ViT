@@ -12,9 +12,8 @@ from fastapi import Request
 from fastapi import UploadFile
 from fastapi.responses import JSONResponse
 from PIL import Image
-from postprocess import post_process
-from preprocess import preprocess_image
-
+from serving.postprocess import post_process
+from serving.preprocess import preprocess_image
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
@@ -24,7 +23,7 @@ async def lifespan(app: FastAPI):
     app.state.model = mlflow.pyfunc.load_model(
         model_uri='models:/BirdsClassificationModel/1',
     )
-    with open('/app/classes.txt') as f:
+    with open('/app/services/serving/src/serving/classes.txt') as f:
         classes = f.readlines()
         classes = [line.strip().split()[1].split('.')[-1] for line in classes]
 
@@ -77,8 +76,4 @@ async def health_check() -> JSONResponse:
 
 
 def main():
-    uvicorn.run(app, host='0.0.0.0', port=8000, reload=True)
-
-
-if __name__ == '__main__':
-    main()
+    uvicorn.run('serving:app', host='0.0.0.0', port=8000, reload=True)

@@ -1907,7 +1907,7 @@ wheels = [
 [[package]]
 name = "serving"
 version = "0.1.0"
-source = { virtual = "src/serving" }
+source = { editable = "services/serving" }
 dependencies = [
     { name = "fastapi" },
     { name = "mlflow" },

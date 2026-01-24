@@ -10,13 +10,14 @@ RUN apt-get update && apt-get install -y \
 RUN curl -LsSf https://astral.sh/uv/install.sh | sh
 ENV PATH="/root/.local/bin:$PATH"
 
-COPY pyproject.toml ./
-COPY uv.lock ./
-COPY README.md ./
+COPY pyproject.toml uv.lock ./
 
-RUN uv sync
+COPY services/serving/pyproject.toml ./services/serving/
+COPY services/serving/README.md ./services/serving/
+COPY services/serving/ ./services/serving/
 
-COPY ./src/serving/ .
+RUN uv sync --no-install-project --no-dev
+RUN uv sync --no-dev --package serving
 
 EXPOSE 8000
 
