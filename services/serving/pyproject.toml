@@ -1,25 +1,26 @@
 [project]
 name = "serving"
 version = "0.1.0"
-description = "Add your description here"
+description = "Birds Classification: FastAPI (pre/post-processing with HPA) + KServe (model serving with scale-to-zero)"
 readme = "README.md"
 authors = [
     { name = "vuniem131104", email = "niemhoalongvu@gmail.com" }
 ]
-requires-python = ">=3.13"
+requires-python = ">=3.11"
 dependencies = [
-    "fastapi>=0.128.0",
-    "mlflow>=3.8.1",
-    "numpy>=2.4.1",
-    "pillow>=12.1.0",
-    "python-multipart>=0.0.21",
-    "torch>=2.9.1",
-    "torchvision>=0.24.1",
-    "uvicorn>=0.40.0",
+    "httpx>=0.27.0",
+    "kserve>=0.14.0",
+    "mlflow>=2.10.0",
+    "numpy>=1.26.0",
+    "pillow>=10.0.0",
+    "python-multipart>=0.0.9",
 ]
 
 [project.scripts]
+# FastAPI pre/post-processing service (with HPA)
 serving = "serving:main"
+# KServe model serving (scale-to-zero)
+kserve-model = "serving.kserve_model:main"
 
 [build-system]
 requires = ["uv_build>=0.9.4,<0.10.0"]

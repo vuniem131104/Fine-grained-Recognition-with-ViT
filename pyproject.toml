@@ -9,6 +9,7 @@ dependencies = []
 [tool.uv.workspace]
 members = [
     "services/serving",
+    "services/api",
 ]
 
 [dependency-groups]

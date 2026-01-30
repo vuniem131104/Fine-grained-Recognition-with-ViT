@@ -61,8 +61,8 @@ services:
   serving:
     build:
       context: .
-      dockerfile: ./services/serving/src/serving/Dockerfile
-    container_name: inference-layer
+      dockerfile: ./services/serving/src/serving/Dockerfile.kserve
+    container_name: serving-service
     depends_on:
       - mlflow
     environment:
@@ -71,8 +71,13 @@ services:
       AWS_SECRET_ACCESS_KEY: ${MINIO_ROOT_PASSWORD}
       MLFLOW_S3_ENDPOINT_URL: ${MLFLOW_S3_ENDPOINT_URL}
       MLFLOW_EXPERIMENT_NAME: ${MLFLOW_EXPERIMENT_NAME}
+      HTTP_PORT: ${HTTP_PORT}
+      GRPC_PORT: ${GRPC_PORT}
+      WORKERS: ${WORKERS}
+      ENABLE_GRPC: ${ENABLE_GRPC}
     ports:
-      - "8000:8000"
+      - "8080:8080"
+      - "8081:8081"
     networks:
       - aide1
 
@@ -80,7 +85,7 @@ services:
     image: nginx:alpine
     container_name: nginx_gateway
     ports:
-      - "8080:80"
+      - "8088:80"
     volumes:
       - ./services/nginx/nginx.conf:/etc/nginx/nginx.conf:ro
     depends_on:
