@@ -8,6 +8,6 @@ wheels/
 
 # Virtual environments
 .venv
-data/
 models/
 .env
+mlflow_credentials/

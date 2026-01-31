@@ -16,6 +16,7 @@ members = [
 dev = [
     "boto3>=1.42.34",
     "flake8>=7.3.0",
+    "google-cloud-storage>=3.8.0",
     "isort>=7.0.0",
     "matplotlib>=3.10.8",
     "minio>=7.2.20",

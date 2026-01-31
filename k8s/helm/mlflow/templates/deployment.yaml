@@ -1,0 +1,92 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ include "mlflow.fullname" . }}
+  labels:
+    {{- include "mlflow.labels" . | nindent 4 }}
+spec:
+  replicas: {{ .Values.replicaCount }}
+  selector:
+    matchLabels:
+      {{- include "mlflow.selectorLabels" . | nindent 6 }}
+  template:
+    metadata:
+      labels:
+        {{- include "mlflow.selectorLabels" . | nindent 8 }}
+    spec:
+      containers:
+        - name: "mlflow-server-container"
+          image: "{{ .Values.mlfow_server_image.repository }}:{{ .Values.mlfow_server_image.tag }}"
+          imagePullPolicy: {{ .Values.mlfow_server_image.pullPolicy }}
+          env:
+            - name: "ARTIFACTS_STORE_URI"
+              valueFrom:
+                configMapKeyRef:
+                  name: "mlflow-config"
+                  key: "artifacts_store_uri"
+            - name: "SQL_USR"
+              valueFrom:
+                secretKeyRef:
+                  name: "mlflow-secret"
+                  key: "sql_usr"
+            - name: "SQL_PWD"
+              valueFrom:
+                secretKeyRef:
+                  name: "mlflow-secret"
+                  key: "sql_pwd"
+            - name: "SQL_DB"
+              valueFrom:
+                secretKeyRef:
+                  name: "mlflow-secret"
+                  key: "sql_db"
+            - name: "GOOGLE_APPLICATION_CREDENTIALS"
+              value: "/var/run/secrets/gcs-auth"
+          volumeMounts:
+            - name: "mlflow-secret-volume"
+              mountPath: "/var/run/secrets"
+              readOnly: true
+            - name: "mlflow-config-volume"
+              mountPath: "/var/run/config"
+              readOnly: true
+          ports:
+            - containerPort: {{ .Values.mlfow_server_image.port }}
+          resources:
+            {{- toYaml .Values.resources | nindent 12 }}
+          command: [ "mlflow" ]
+          args: [
+              "server",
+              "--host=0.0.0.0",
+              "--default-artifact-root=$(ARTIFACTS_STORE_URI)",
+              "--backend-store-uri=postgresql://$(SQL_USR):$(SQL_PWD)@localhost:5432/$(SQL_DB)",
+              "--serve-artifacts"
+          ]
+        - name: "cloud-sql-proxy-container"
+          image: "{{ .Values.cloudsql_proxy_image.repository }}:{{ .Values.cloudsql_proxy_image.tag }}"
+          imagePullPolicy: {{ .Values.cloudsql_proxy_image.pullPolicy }}
+          env:
+            - name: "SQL_INSTANCE_CONNECTION_NAME"
+              valueFrom:
+                configMapKeyRef:
+                  name: "mlflow-config"
+                  key: "sql_instance_connection_name"
+          volumeMounts:
+            - name: "mlflow-secret-volume"
+              mountPath: "/var/run/secrets"
+              readOnly: true
+            - name: "mlflow-config-volume"
+              mountPath: "/var/run/config"
+              readOnly: true
+          ports:
+            - containerPort: 5432
+          command: [ "/cloud_sql_proxy" ]
+          args: [
+              "-instances=$(SQL_INSTANCE_CONNECTION_NAME)=tcp:0.0.0.0:5432",
+              "-credential_file=/var/run/secrets/g-auth"
+          ]
+      volumes:
+        - name: "mlflow-secret-volume"
+          secret:
+            secretName: "mlflow-secret"
+        - name: "mlflow-config-volume"
+          configMap:
+            name: "mlflow-config"

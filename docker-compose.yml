@@ -38,18 +38,12 @@ services:
     build:
       context: ./services/mlflow
     container_name: mlflow-server
-    depends_on:
-      - postgres
-      - minio
     environment:
       MLFLOW_TRACKING_URI: ${MLFLOW_TRACKING_URI}
-      AWS_ACCESS_KEY_ID: ${MINIO_ROOT_USER}
-      AWS_SECRET_ACCESS_KEY: ${MINIO_ROOT_PASSWORD}
-      MLFLOW_S3_ENDPOINT_URL: ${MLFLOW_S3_ENDPOINT_URL}
     command: >
       mlflow server
       --backend-store-uri postgresql://${POSTGRES_USER}:${POSTGRES_PASSWORD}@${POSTGRES_HOST}:${POSTGRES_PORT}/${POSTGRES_DB}
-      --default-artifact-root s3://${MINIO_BUCKET}/
+      --default-artifact-root gs://${GCS_BUCKET}/
       --host 0.0.0.0
       --port 5000
       --allowed-hosts "*"
