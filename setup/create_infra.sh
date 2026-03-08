@@ -88,6 +88,7 @@ gcloud projects add-iam-policy-binding $PROJECT_ID \
 echo """
 Create a service account with GCS access
 Create a service account with cloud SQL access
+Create a service account with artifact registry access
 Create a key that will be stored locally in ./mlflow_credentials ...
 """
 MLFLOW_SA_NAME=mlflow-account
@@ -103,25 +104,13 @@ gcloud projects add-iam-policy-binding $PROJECT_ID \
   --member "serviceAccount:${MLFLOW_SA_EMAIL}" \
   --role "roles/cloudsql.admin"
 
+gcloud projects add-iam-policy-binding $PROJECT_ID \
+  --member "serviceAccount:${MLFLOW_SA_EMAIL}" \
+  --role "roles/artifactregistry.reader"
+
 gcloud iam service-accounts keys create $MLFLOW_CREDENTIALS \
       --iam-account=${MLFLOW_SA_EMAIL}
 
-
-echo """
-Create a service account with cloud container registry access
-Create a key that will be stored locally in ./mlflow_credentials ...
-"""
-GAR_SA_NAME=gar-account
-GAR_SA_EMAIL="${GAR_SA_NAME}@${PROJECT_ID}.iam.gserviceaccount.com"
-
-gcloud iam service-accounts create ${GAR_SA_NAME}
-
-gcloud projects add-iam-policy-binding $PROJECT_ID \
-  --member "serviceAccount:${GAR_SA_EMAIL}" \
-  --role "roles/artifactregistry.serviceAgent"
-
-gcloud iam service-accounts keys create $GAR_CREDENTIALS \
-  --iam-account=${GAR_SA_EMAIL}
 
 
 echo """

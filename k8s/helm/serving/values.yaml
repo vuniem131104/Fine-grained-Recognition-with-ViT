@@ -1,0 +1,21 @@
+modelName: birds-model
+
+autoscaling:
+  minReplicas: 0
+  maxReplicas: 5
+  scaleTarget: 10
+  scaleToZeroPodRetentionPeriod: "300s"
+
+resources:
+  limits:
+    cpu: "2000m"
+    memory: "6Gi"
+  requests:
+    cpu: "1000m"
+    memory: "4Gi"
+
+predictor:
+  storageUri: "gs://mlflow-storagee/2/models/m-7c945bc5de924d56af7894d3e3e621c7/artifacts"
+  modelFormat: "pytorch"
+  protocolVersion: "v2"
+  pytorch: true

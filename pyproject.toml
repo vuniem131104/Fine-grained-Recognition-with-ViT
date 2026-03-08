@@ -8,18 +8,23 @@ dependencies = []
 
 [tool.uv.workspace]
 members = [
-    "services/serving",
     "services/api",
 ]
 
 [dependency-groups]
 dev = [
     "boto3>=1.42.34",
+    "evidently>=0.7.20",
     "flake8>=7.3.0",
     "google-cloud-storage>=3.8.0",
     "isort>=7.0.0",
     "matplotlib>=3.10.8",
+    "matplotlib-inline>=0.2.1",
     "minio>=7.2.20",
+    "mlflow[mlserver]>=3.5.1",
+    "mlserver>=1.2.1",
+    "mlserver-mlflow>=1.7.1",
+    "numpy>=2.4.1",
     "pandas>=2.3.3",
     "pre-commit>=4.5.1",
     "tdqm>=0.0.1",

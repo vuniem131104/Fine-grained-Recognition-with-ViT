@@ -12,9 +12,13 @@ dependencies = [
     "httpx>=0.28.1",
     "numpy>=2.4.1",
     "pillow>=12.1.0",
+    "psycopg2-binary>=2.9.11",
+    "python-multipart>=0.0.22",
     "scipy>=1.17.0",
+    "structlog>=25.5.0",
     "torch>=2.10.0",
     "torchvision>=0.25.0",
+    "ultralytics>=8.4.19",
     "uvicorn>=0.40.0",
 ]
 

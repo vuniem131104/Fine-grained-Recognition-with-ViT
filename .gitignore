@@ -10,4 +10,4 @@ wheels/
 .venv
 models/
 .env
-mlflow_credentials/
+google-cloud-credentials/

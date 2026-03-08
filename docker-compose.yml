@@ -40,6 +40,7 @@ services:
     container_name: mlflow-server
     environment:
       MLFLOW_TRACKING_URI: ${MLFLOW_TRACKING_URI}
+      GOOGLE_APPLICATION_CREDENTIALS: ${GOOGLE_APPLICATION_CREDENTIALS}
     command: >
       mlflow server
       --backend-store-uri postgresql://${POSTGRES_USER}:${POSTGRES_PASSWORD}@${POSTGRES_HOST}:${POSTGRES_PORT}/${POSTGRES_DB}
@@ -52,38 +53,25 @@ services:
     networks:
       - aide1
 
-  serving:
+  api:
     build:
-      context: .
-      dockerfile: ./services/serving/src/serving/Dockerfile.kserve
-    container_name: serving-service
-    depends_on:
-      - mlflow
-    environment:
-      MLFLOW_TRACKING_URI: ${MLFLOW_TRACKING_URI}
-      AWS_ACCESS_KEY_ID: ${MINIO_ROOT_USER}
-      AWS_SECRET_ACCESS_KEY: ${MINIO_ROOT_PASSWORD}
-      MLFLOW_S3_ENDPOINT_URL: ${MLFLOW_S3_ENDPOINT_URL}
-      MLFLOW_EXPERIMENT_NAME: ${MLFLOW_EXPERIMENT_NAME}
-      HTTP_PORT: ${HTTP_PORT}
-      GRPC_PORT: ${GRPC_PORT}
-      WORKERS: ${WORKERS}
-      ENABLE_GRPC: ${ENABLE_GRPC}
-    ports:
-      - "8080:8080"
-      - "8081:8081"
-    networks:
-      - aide1
-
-  nginx:
-    image: nginx:alpine
-    container_name: nginx_gateway
-    ports:
-      - "8088:80"
+      dockerfile: ./services/api/Dockerfile
+    container_name: bird-api
     volumes:
-      - ./services/nginx/nginx.conf:/etc/nginx/nginx.conf:ro
-    depends_on:
-      - serving
+      - type: bind
+        source: ./services/api
+        target: /app/services/api
+    environment:
+      HTTP_PORT: ${HTTP_PORT}
+      WORKERS: ${WORKERS}
+      KSERVE_MODEL_URL: ${KSERVE_MODEL_URL}
+      POSTGRES_HOST: ${POSTGRES_HOST}
+      POSTGRES_PORT: ${POSTGRES_PORT}
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      POSTGRES_DB: ${POSTGRES_DB}
+    ports:
+      - "8000:8000"
     networks:
       - aide1
 
