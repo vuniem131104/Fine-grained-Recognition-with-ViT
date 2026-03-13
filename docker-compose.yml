@@ -15,7 +15,7 @@ services:
     volumes:
       - postgres_data:/var/lib/postgresql/data
     ports:
-      - "5432:5432"
+      - "15432:5432"
     networks:
       - aide1
 
@@ -43,8 +43,8 @@ services:
       GOOGLE_APPLICATION_CREDENTIALS: ${GOOGLE_APPLICATION_CREDENTIALS}
     command: >
       mlflow server
-      --backend-store-uri postgresql://${POSTGRES_USER}:${POSTGRES_PASSWORD}@${POSTGRES_HOST}:${POSTGRES_PORT}/${POSTGRES_DB}
-      --default-artifact-root gs://${GCS_BUCKET}/
+      --backend-store-uri postgresql://${MLFLOW_SQL_USER}:${MLFLOW_SQL_PASSWORD}@${MLFLOW_SQL_HOST}:${MLFLOW_SQL_PORT}/${MLFLOW_SQL_DATABASE}
+      --default-artifact-root gs://${MLFLOW_OBJECT_STORAGE_BUCKET}/
       --host 0.0.0.0
       --port 5000
       --allowed-hosts "*"
@@ -56,6 +56,8 @@ services:
   api:
     build:
       dockerfile: ./services/api/Dockerfile
+      tags:
+        - bird-classification-api:latest
     container_name: bird-api
     volumes:
       - type: bind

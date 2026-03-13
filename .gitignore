@@ -1,4 +1,3 @@
-# Python-generated files
 __pycache__/
 *.py[oc]
 build/
@@ -6,8 +5,10 @@ dist/
 wheels/
 *.egg-info
 
-# Virtual environments
 .venv
-models/
+models/bird_classification/best.pth
+models/bird_classification/last.pth
+models/bird_classification/model-store/
 .env
-google-cloud-credentials/
+secret-configmap/
+mlflow-gcs-sql.json

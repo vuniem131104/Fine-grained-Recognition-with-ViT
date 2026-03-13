@@ -14,6 +14,7 @@ members = [
 [dependency-groups]
 dev = [
     "boto3>=1.42.34",
+    "captum>=0.7.0",
     "evidently>=0.7.20",
     "flake8>=7.3.0",
     "google-cloud-storage>=3.8.0",
@@ -28,4 +29,8 @@ dev = [
     "pandas>=2.3.3",
     "pre-commit>=4.5.1",
     "tdqm>=0.0.1",
+    "torch-model-archiver>=0.12.0",
+    "torch-workflow-archiver>=0.2.15",
+    "torchserve>=0.12.0",
+    "ultralytics>=8.4.21",
 ]

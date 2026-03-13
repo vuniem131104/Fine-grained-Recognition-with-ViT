@@ -16,9 +16,11 @@ RUN apt-get update && apt-get install -y \
 
 RUN mkdir -p ./models/bird_detection
 
-COPY models/bird_detection/yolov8n.pt ./models/bird_detection/
+# COPY models/bird_detection/yolov8n.pt ./models/bird_detection/
 
 COPY --from=ghcr.io/astral-sh/uv:latest /uv /uvx /usr/local/bin/
+
+ENV UV_NO_CACHE=1
 
 COPY pyproject.toml uv.lock ./
 

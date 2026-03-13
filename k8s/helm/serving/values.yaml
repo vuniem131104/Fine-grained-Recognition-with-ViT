@@ -14,8 +14,10 @@ resources:
     cpu: "1000m"
     memory: "4Gi"
 
+serviceAccount:
+  name: kserve-sa
+  gcpServiceAccount: kserve-sa@project-2a55a756-9eba-4a36-8c6.iam.gserviceaccount.com
+  gcpProject: project-2a55a756-9eba-4a36-8c6
+
 predictor:
-  storageUri: "gs://mlflow-storagee/2/models/m-7c945bc5de924d56af7894d3e3e621c7/artifacts"
-  modelFormat: "pytorch"
-  protocolVersion: "v2"
-  pytorch: true
+  storageUri: "gs://model_aide/bird_classification/v1"
