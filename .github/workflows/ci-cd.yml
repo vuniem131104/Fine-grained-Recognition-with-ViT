@@ -56,12 +56,13 @@ jobs:
           python-version: "3.13"
 
       - name: Install dependencies
-        run: uv sync --dev
+        run: uv sync --package api
 
       - name: Run API tests with coverage
+        working-directory: services/api
         run: |
-          uv run pytest services/api/tests/ \
-            --cov=services/api/src/api \
+          uv run pytest tests/ \
+            --cov=src/api \
             --cov-report=term-missing \
             --cov-report=xml:coverage.xml \
             --cov-fail-under=80 \
@@ -72,7 +73,7 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: coverage-report
-          path: coverage.xml
+          path: services/api/coverage.xml
 
   build-push-api:
     needs: test-api
