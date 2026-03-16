@@ -66,7 +66,7 @@ setup_telemetry()
 # Get global tracer for creating spans
 tracer = otel_trace.get_tracer(__name__)
 
-APP_TITLE = "Bird Classification"
+APP_TITLE = "Bird Classification Test With Github Actions"
 APP_ICON = "🐦"
 
 THEME_PRIMARY_COLOR = "#667eea"
@@ -74,8 +74,8 @@ THEME_SECONDARY_COLOR = "#764ba2"
 
 # Page configuration
 st.set_page_config(
-    page_title="🐦 Bird Classification",
-    page_icon="🐦",
+    page_title=APP_TITLE,
+    page_icon=APP_ICON,
     layout="wide",
     initial_sidebar_state="expanded",
 )
