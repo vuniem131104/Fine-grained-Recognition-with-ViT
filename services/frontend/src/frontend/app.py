@@ -66,7 +66,7 @@ setup_telemetry()
 # Get global tracer for creating spans
 tracer = otel_trace.get_tracer(__name__)
 
-APP_TITLE = "Bird Classification Test With Github Actions"
+APP_TITLE = "Bird Classification Test With Github Actionssssss"
 APP_ICON = "🐦"
 
 THEME_PRIMARY_COLOR = "#667eea"
