@@ -4,7 +4,7 @@ api:
   replicaCount: 1
   image:
     repository: us-central1-docker.pkg.dev/project-2a55a756-9eba-4a36-8c6/bird-classification/bird-classification-api
-    tag: "v3"
+    tag: "latest"
     pullPolicy: Always
   port: 8000
   resources:

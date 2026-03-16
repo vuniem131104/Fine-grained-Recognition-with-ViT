@@ -74,8 +74,8 @@ THEME_SECONDARY_COLOR = "#764ba2"
 
 # Page configuration
 st.set_page_config(
-    page_title="🐦 Bird Classification",
-    page_icon="🐦",
+    page_title=APP_TITLE,
+    page_icon=APP_ICON,
     layout="wide",
     initial_sidebar_state="expanded",
 )
@@ -284,7 +284,7 @@ def render_header():
     st.markdown("""
     <div class="header-container">
         <h1>🐦 Bird Classification</h1>
-        <p>Identify bird species using advanced AI technology</p>
+        <p>Identify bird species using advanced AI technology made with love and care.</p>
     </div>
     """, unsafe_allow_html=True)
 
