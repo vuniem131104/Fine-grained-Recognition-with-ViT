@@ -19,40 +19,6 @@ services:
     networks:
       - aide1
 
-  minio:
-    image: minio/minio
-    container_name: mlflow-minio
-    command: server /data --console-address ":9001"
-    environment:
-      MINIO_ROOT_USER: ${MINIO_ROOT_USER}
-      MINIO_ROOT_PASSWORD: ${MINIO_ROOT_PASSWORD}
-    ports:
-      - "9000:9000"
-      - "9001:9001"
-    volumes:
-      - minio_data:/data
-    networks:
-      - aide1
-
-  mlflow:
-    build:
-      context: ./services/mlflow
-    container_name: mlflow-server
-    environment:
-      MLFLOW_TRACKING_URI: ${MLFLOW_TRACKING_URI}
-      GOOGLE_APPLICATION_CREDENTIALS: ${GOOGLE_APPLICATION_CREDENTIALS}
-    command: >
-      mlflow server
-      --backend-store-uri postgresql://${MLFLOW_SQL_USER}:${MLFLOW_SQL_PASSWORD}@${MLFLOW_SQL_HOST}:${MLFLOW_SQL_PORT}/${MLFLOW_SQL_DATABASE}
-      --default-artifact-root gs://${MLFLOW_OBJECT_STORAGE_BUCKET}/
-      --host 0.0.0.0
-      --port 5000
-      --allowed-hosts "*"
-    ports:
-      - "5000:5000"
-    networks:
-      - aide1
-
   api:
     build:
       dockerfile: ./services/api/Dockerfile
@@ -77,6 +43,22 @@ services:
     networks:
       - aide1
 
+  frontend:
+    build:
+      dockerfile: ./services/frontend/Dockerfile
+      tags:
+        - bird-classification-frontend:latest
+    container_name: bird-frontend
+    volumes:
+      - type: bind
+        source: ./services/frontend
+        target: /app/services/frontend
+    environment:
+      API_URL: ${API_URL}
+    ports:
+      - "8501:8501"
+    networks:
+      - aide1
+
 volumes:
   postgres_data:
-  minio_data:

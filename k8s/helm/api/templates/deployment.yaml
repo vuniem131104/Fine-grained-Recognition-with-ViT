@@ -1,0 +1,46 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: bird-classification-api
+  namespace: {{ .Values.namespace }}
+  labels:
+    app: bird-classification-api
+spec:
+  replicas: {{ .Values.api.replicaCount }}
+  selector:
+    matchLabels:
+      app: bird-classification-api
+  template:
+    metadata:
+      labels:
+        app: bird-classification-api
+    spec:
+      serviceAccountName: {{ .Values.serviceAccount.name }}
+      containers:
+      - name: api
+        image: {{ .Values.api.image.repository }}:{{ .Values.api.image.tag }}
+        imagePullPolicy: {{ .Values.api.image.pullPolicy }}
+        ports:
+        - containerPort: {{ .Values.api.port }}
+          name: http
+        envFrom:
+        - configMapRef:
+            name: api-config
+        - secretRef:
+            name: api-secrets
+        resources:
+          {{- toYaml .Values.api.resources | nindent 10 }}
+      - name: cloud-sql-proxy
+        image: {{ .Values.cloudSqlProxy.image }}
+        args:
+          - "--structured-logs"
+          - "--auto-iam-authn"
+          - "--port={{ .Values.cloudSqlProxy.port }}"
+          - "$(CLOUD_SQL_INSTANCE)"
+        envFrom:
+        - secretRef:
+            name: api-secrets
+        securityContext:
+          runAsNonRoot: true
+        resources:
+          {{- toYaml .Values.cloudSqlProxy.resources | nindent 10 }}

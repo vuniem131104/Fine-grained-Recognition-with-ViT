@@ -1,0 +1,39 @@
+namespace: aide-monitoring
+
+tempo:
+  replicas: 1
+  image: grafana/tempo:2.7.2
+  httpPort: 3200
+  grpcPort: 9095
+  otlpGrpcPort: 4317
+  otlpHttpPort: 4318
+  resources:
+    requests:
+      cpu: "100m"
+      memory: "256Mi"
+    limits:
+      cpu: "250m"
+      memory: "512Mi"
+
+storage:
+  path: /var/tempo
+  blocksRetention: 168h  # 7 days
+  gcs:
+    bucketName: tempo-grafana-traces-bucket
+  persistentVolume:
+    size: 2Gi  # only used for WAL
+    enabled: true
+
+serviceAccount:
+  name: tempo-sa
+  gcpServiceAccount: "tempo-sa@project-2a55a756-9eba-4a36-8c6.iam.gserviceaccount.com"
+
+service:
+  type: ClusterIP
+  httpPort: 3200
+  grpcPort: 9095
+  otlpGrpcPort: 4317
+  otlpHttpPort: 4318
+
+prometheus:
+  endpoint: "http://prometheus-server.aide-monitoring.svc.cluster.local/api/v1/write"

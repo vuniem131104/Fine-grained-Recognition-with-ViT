@@ -10,5 +10,9 @@ models/bird_classification/best.pth
 models/bird_classification/last.pth
 models/bird_classification/model-store/
 .env
-secret-configmap/
+k8s/manifests/
 mlflow-gcs-sql.json
+.streamlit/
+.streamlit_cache/
+.pytest_cache/
+.coverage

@@ -14,10 +14,6 @@ RUN apt-get update && apt-get install -y \
     libxcb1 \
     && rm -rf /var/lib/apt/lists/*
 
-RUN mkdir -p ./models/bird_detection
-
-# COPY models/bird_detection/yolov8n.pt ./models/bird_detection/
-
 COPY --from=ghcr.io/astral-sh/uv:latest /uv /uvx /usr/local/bin/
 
 ENV UV_NO_CACHE=1

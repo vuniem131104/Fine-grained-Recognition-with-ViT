@@ -2,17 +2,17 @@ modelName: birds-model
 
 autoscaling:
   minReplicas: 0
-  maxReplicas: 5
-  scaleTarget: 10
-  scaleToZeroPodRetentionPeriod: "300s"
+  maxReplicas: 3
+  scaleTarget: 5
+  scaleToZeroPodRetentionPeriod: "900s"
 
 resources:
   limits:
-    cpu: "2000m"
-    memory: "6Gi"
+    cpu: "1500m"
+    memory: "3Gi"
   requests:
-    cpu: "1000m"
-    memory: "4Gi"
+    cpu: "500m"
+    memory: "1Gi"
 
 serviceAccount:
   name: kserve-sa

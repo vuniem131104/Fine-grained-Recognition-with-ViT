@@ -1,0 +1,50 @@
+namespace: aide-production
+
+api:
+  replicaCount: 1
+  image:
+    repository: us-central1-docker.pkg.dev/project-2a55a756-9eba-4a36-8c6/bird-classification/bird-classification-api
+    tag: "v3"
+    pullPolicy: Always
+  port: 8000
+  resources:
+    requests:
+      cpu: "250m"
+      memory: "1Gi"
+    limits:
+      cpu: "1500m"
+      memory: "2Gi"
+
+cloudSqlProxy:
+  image: gcr.io/cloud-sql-connectors/cloud-sql-proxy:2.8.0
+  port: 5432
+  resources:
+    requests:
+      cpu: "100m"
+      memory: "128Mi"
+    limits:
+      cpu: "250m"
+      memory: "256Mi"
+
+serviceAccount:
+  name: gar-cloud-sql-access-sa
+  gcpServiceAccount: "gar-cloud-sql-access-sa@project-2a55a756-9eba-4a36-8c6.iam.gserviceaccount.com"
+
+service:
+  type: ClusterIP
+  port: 80
+  targetPort: 8000
+
+ingress:
+  enabled: true
+  host: "bird-classification-api.aide-production.136.114.159.18.sslip.io"
+  ingressClassName: nginx
+  rewriteTarget: "/"
+  maxBodySize: "50m"
+
+autoscaling:
+  enabled: true
+  minReplicas: 1
+  maxReplicas: 3
+  targetCPUUtilization: 85
+  targetMemoryUtilization: 90

@@ -1,0 +1,10 @@
+apiVersion: v2
+name: api
+description: Helm chart for Bird Classification API deployment
+type: application
+version: 0.1.0
+appVersion: "1.0.0"
+keywords:
+  - api
+  - bird-classification
+  - deployment

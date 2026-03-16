@@ -1,0 +1,22 @@
+namespace: aide-monitoring
+
+alloy:
+  image: grafana/alloy:v1.7.1
+  replicas: 1
+  resources:
+    requests:
+      cpu: "100m"
+      memory: "128Mi"
+    limits:
+      cpu: "300m"
+      memory: "256Mi"
+
+serviceAccount:
+  name: alloy
+  gcpServiceAccount: "alloy-sa@project-2a55a756-9eba-4a36-8c6.iam.gserviceaccount.com"
+
+config:
+  clusterName: aide-production
+  lokiEndpoint: "http://loki.aide-monitoring.svc.cluster.local:3100/loki/api/v1/push"
+  prometheusEndpoint: "http://prometheus-server.aide-monitoring.svc.cluster.local/api/v1/write"
+  tempoEndpoint: "tempo.aide-monitoring.svc.cluster.local:4317"

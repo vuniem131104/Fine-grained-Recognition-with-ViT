@@ -10,25 +10,22 @@ import numpy as np
 import psycopg2
 import structlog
 import uvicorn
-from dotenv import load_dotenv
 from fastapi import FastAPI
 from fastapi import File
 from fastapi import HTTPException
 from fastapi import UploadFile
 from fastapi.responses import JSONResponse
 from opentelemetry import trace as otel_trace
+from opentelemetry.exporter.otlp.proto.grpc.trace_exporter import OTLPSpanExporter
 from opentelemetry.instrumentation.fastapi import FastAPIInstrumentor
 from opentelemetry.instrumentation.httpx import HTTPXClientInstrumentor
 from opentelemetry.instrumentation.psycopg2 import Psycopg2Instrumentor
 from opentelemetry.sdk.resources import Resource
 from opentelemetry.sdk.trace import TracerProvider
+from opentelemetry.sdk.trace.export import BatchSpanProcessor
 from PIL import Image
 from psycopg2.extras import Json
 from scipy.special import softmax
-# from opentelemetry.exporter.otlp.proto.grpc.trace_exporter import OTLPSpanExporter  # Alloy OTLP export
-# from opentelemetry.sdk.trace.export import BatchSpanProcessor  # Alloy OTLP export
-load_dotenv()
-
 
 def _inject_trace_context(
     logger: structlog.types.WrappedLogger,
@@ -60,15 +57,14 @@ logger = structlog.get_logger()
 def setup_telemetry() -> None:
     """Configure OpenTelemetry tracing, export to Alloy via OTLP gRPC."""
     resource = Resource.create({
-        'service.name': os.getenv('OTEL_SERVICE_NAME'),
+        'service.name': 'bird-classification-api',
         'service.version': '1.0.0',
     })
     provider = TracerProvider(resource=resource)
-    # Alloy OTLP export - commented out for local OTel testing
-    # endpoint = os.getenv("OTEL_EXPORTER_OTLP_ENDPOINT")
-    # provider.add_span_processor(
-    #     BatchSpanProcessor(OTLPSpanExporter(endpoint=endpoint)),
-    # )
+    endpoint = os.getenv("OTEL_EXPORTER_OTLP_ENDPOINT", "http://alloy.aide-monitoring.svc.cluster.local:4317")
+    provider.add_span_processor(
+        BatchSpanProcessor(OTLPSpanExporter(endpoint=endpoint)),
+    )
     otel_trace.set_tracer_provider(provider)
     HTTPXClientInstrumentor().instrument()
     Psycopg2Instrumentor().instrument()
@@ -225,7 +221,7 @@ async def predict(file: UploadFile = File(...)) -> JSONResponse:
         raise HTTPException(status_code=500, detail=f'Postprocessing error: {e}')
 
     try:
-        logger.info('Inserting prediction into database.', extra={'record': results})
+        logger.info('Inserting prediction into database.')
         base64_image = base64.b64encode(image_data).decode('utf-8')
         insert_prediction(base64_image, results['probability'], results['predicted_class'], results['top_3_alternatives'], app.state.connection)
         return JSONResponse(content=results)
