@@ -151,7 +151,7 @@ setup_telemetry()
 
 app = FastAPI(
     version='1.0.0',
-    title='Birds Classification API Test With GAAA',
+    title='Birds Classification API',
     description='API for bird species classification. Calls KServe for model inference.',
     lifespan=lifespan,
 )

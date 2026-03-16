@@ -66,7 +66,7 @@ setup_telemetry()
 # Get global tracer for creating spans
 tracer = otel_trace.get_tracer(__name__)
 
-APP_TITLE = "Bird Classification Test With GAAA"
+APP_TITLE = "Bird Classification"
 APP_ICON = "🐦"
 
 THEME_PRIMARY_COLOR = "#667eea"
@@ -284,7 +284,7 @@ def render_header():
     st.markdown("""
     <div class="header-container">
         <h1>🐦 Bird Classification</h1>
-        <p>Identify bird species using advanced AI technology</p>
+        <p>Identify bird species using advanced AI technology made with love and care.</p>
     </div>
     """, unsafe_allow_html=True)
 
