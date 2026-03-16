@@ -183,7 +183,7 @@ jobs:
 
       - name: Deploy API via Helm
         run: |
-          helm upgrade --install bird-classification-api k8s/helm/api \
+          helm upgrade api k8s/helm/api \
             --namespace ${{ env.NAMESPACE }} \
             --set api.image.tag=${{ needs.build-push-api.outputs.image_tag }}
 
@@ -213,6 +213,6 @@ jobs:
 
       - name: Deploy Frontend via Helm
         run: |
-          helm upgrade --install bird-classification-frontend k8s/helm/frontend \
+          helm upgrade frontend k8s/helm/frontend \
             --namespace ${{ env.NAMESPACE }} \
             --set frontend.image.tag=${{ needs.build-push-frontend.outputs.image_tag }}
