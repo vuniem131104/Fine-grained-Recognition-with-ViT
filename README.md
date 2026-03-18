@@ -256,9 +256,9 @@ Model training is performed in the Jupyter notebook at `notebooks/birds_classifi
    - If you are using a local PostgreSQL instance, skip this step.
    - However, I recommend you to use Cloud SQL Proxy. Please run the Cloud SQL Proxy with the appropriate connection string.
 
-   ```bash
+  ```bash
   cloud-sql-proxy --port $POSTGRES_PORT ${PROJECT_ID}:${ZONE}:${SQL_INSTANCE_NAME}
-    ```
+  ```
 
 4. **Run MLflow Tracking Server:**
    - Run this command in the terminal to start the MLflow tracking server with PostgreSQL backend and GCS artifact storage:
