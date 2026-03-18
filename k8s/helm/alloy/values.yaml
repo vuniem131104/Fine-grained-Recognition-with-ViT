@@ -13,7 +13,6 @@ alloy:
 
 serviceAccount:
   name: alloy
-  gcpServiceAccount: "alloy-sa@project-2a55a756-9eba-4a36-8c6.iam.gserviceaccount.com"
 
 config:
   clusterName: aide-production

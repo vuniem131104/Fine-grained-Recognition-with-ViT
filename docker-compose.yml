@@ -11,7 +11,7 @@ services:
     environment:
       POSTGRES_USER: ${POSTGRES_USER}
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
-      POSTGRES_DB: ${POSTGRES_DB}
+      POSTGRES_DB: ${MAIN_DB}
     volumes:
       - postgres_data:/var/lib/postgresql/data
     ports:
@@ -33,11 +33,12 @@ services:
       HTTP_PORT: ${HTTP_PORT}
       WORKERS: ${WORKERS}
       KSERVE_MODEL_URL: ${KSERVE_MODEL_URL}
+      KSERVE_INFERENCE_KEY: ${KSERVE_INFERENCE_KEY}
       POSTGRES_HOST: ${POSTGRES_HOST}
       POSTGRES_PORT: ${POSTGRES_PORT}
       POSTGRES_USER: ${POSTGRES_USER}
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
-      POSTGRES_DB: ${POSTGRES_DB}
+      POSTGRES_DB: ${MAIN_DB}
     ports:
       - "8000:8000"
     networks:
@@ -57,6 +58,27 @@ services:
       API_URL: ${API_URL}
     ports:
       - "8501:8501"
+    networks:
+      - aide1
+
+  kserve:
+    image: pytorch/torchserve:latest-cpu
+    container_name: kserve-predictor
+    user: root
+    ports:
+      - "8085:8085"
+      - "8090:8090"
+    volumes:
+      - ./models/bird_classification/model-store:/home/model-server/model-store
+      - ./models/bird_classification/config/config.properties:/home/model-server/config.properties
+    environment:
+      - TS_SERVICE_ENVELOPE=kservev2
+    command: 
+      - torchserve 
+      - --start 
+      - --model-store /home/model-server/model-store
+      - --models all 
+      - --ts-config /home/model-server/config.properties
     networks:
       - aide1
 

@@ -703,6 +703,7 @@ datasources:
       editable: true
     - name: Loki
       type: loki
+      uid: loki
       url: http://loki.aide-monitoring.svc.cluster.local:3100
       access: proxy
       isDefault: false
@@ -713,7 +714,7 @@ datasources:
           - datasourceUid: tempo
             matcherRegex: "\"traceID\":\\s*\"(\\w+)\""
             name: TraceID
-            url: "${__value.raw}"
+            url: "{ trace:id = \"$${__value.raw}\" }"
     - name: Tempo
       type: tempo
       uid: tempo

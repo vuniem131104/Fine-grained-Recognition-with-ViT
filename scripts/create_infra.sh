@@ -6,22 +6,14 @@ else
     exit 1
 fi
 
-echo """
-######################################################################
-# Create the following resources in Google cloud:                    #
-#  - Bucket in cloud storage that will be used as artifact storage   #
-#  - PostgreSQL DB in cloud SQL that will be used as a backend db    #
-#  - Service account (and json-key) with access to GCS and cloud SQL #
-#  - Container registry with the mlflow image                        #
-######################################################################
-"""
 PROJECT_ID=$(gcloud config list --format='value(core.project)')
 
 echo """
 Enable relevant services ...
 """
 gcloud services enable \
-  cloudbuild.googleapis.com \
+  container.googleapis.com \
+  storage.googleapis.com \
   artifactregistry.googleapis.com \
   sqladmin.googleapis.com \
   iam.googleapis.com \
@@ -29,16 +21,18 @@ gcloud services enable \
   sts.googleapis.com
 
 
-
 echo """
-Create bucket ...
+Create buckets ...
 """
-gsutil mb gs://$BUCKET_NAME
-
+gsutil mb gs://${LOKI_CHUNKS_BUCKET_NAME}
+gsutil mb gs://${LOKI_RULER_BUCKET_NAME}
+gsutil mb gs://${MLFLOW_BUCKET_NAME}
+gsutil mb gs://${MODEL_BUCKET_NAME}
+gsutil mb gs://${TEMPO_TRACES_BUCKET_NAME}
 
 
 echo """
-Create backend DB ...
+Create SQL instance, user and databases ...
 """
 gcloud sql instances create $SQL_INSTANCE_NAME \
   --database-version=POSTGRES_18 \
@@ -46,82 +40,157 @@ gcloud sql instances create $SQL_INSTANCE_NAME \
   --tier=db-f1-micro \
   --storage-size=10 \
   --region=us-central1 \
-  --root-password=$SQL_PWD
+  --root-password=$POSTGRES_PASSWORD
 
-echo "Create mlflow_credentials directory ..."
-mkdir -p ./mlflow_credentials
+gcloud sql users create $POSTGRES_USER \
+  --instance=$SQL_INSTANCE_NAME \
+  --password=$POSTGRES_PASSWORD
 
-echo """
-Create a dedicated service account for Cloud Build ...
-"""
-CLOUDBUILD_SA_NAME=cloudbuild-sa
-CLOUDBUILD_SA_EMAIL="${CLOUDBUILD_SA_NAME}@${PROJECT_ID}.iam.gserviceaccount.com"
+gcloud sql databases create $MLFLOW_DB \
+  --instance=$SQL_INSTANCE_NAME
 
-# Check if service account already exists
-if gcloud iam service-accounts describe $CLOUDBUILD_SA_EMAIL &>/dev/null; then
-    echo "Service account $CLOUDBUILD_SA_EMAIL already exists"
-else
-    gcloud iam service-accounts create $CLOUDBUILD_SA_NAME \
-        --display-name="Cloud Build Service Account" \
-        --description="Service account for Cloud Build operations"
-fi
+gcloud sql databases create $MAIN_DB \
+  --instance=$SQL_INSTANCE_NAME
 
 echo """
-Grant necessary permissions to Cloud Build service account ...
+Create service accounts and grant permissions ...
 """
-gcloud projects add-iam-policy-binding $PROJECT_ID \
-    --member="serviceAccount:${CLOUDBUILD_SA_EMAIL}" \
-    --role="roles/storage.admin"
 
-gcloud projects add-iam-policy-binding $PROJECT_ID \
-    --member="serviceAccount:${CLOUDBUILD_SA_EMAIL}" \
+LOKI_SA_EMAIL="${LOKI_SA_NAME}@${PROJECT_ID}.iam.gserviceaccount.com"
+
+gcloud iam service-accounts create ${LOKI_SA_NAME} \
+    --display-name="Loki Storage Service Account"
+
+gcloud storage buckets add-iam-policy-binding gs://${LOKI_CHUNKS_BUCKET_NAME} \
+    --member="serviceAccount:${LOKI_SA_EMAIL}" \
+    --role="roles/storage.objectUser"
+
+gcloud storage buckets add-iam-policy-binding gs://${LOKI_RULER_BUCKET_NAME} \
+    --member="serviceAccount:${LOKI_SA_EMAIL}" \
+    --role="roles/storage.objectUser"
+
+gcloud iam service-accounts add-iam-policy-binding ${LOKI_SA_EMAIL} \
+    --role="roles/iam.workloadIdentityUser" \
+    --member="serviceAccount:${PROJECT_ID}.svc.id.goog[${MONITORING_NAMESPACE}/${LOKI_SA_NAME}]"
+
+TEMPO_SA_EMAIL="${TEMPO_SA_NAME}@${PROJECT_ID}.iam.gserviceaccount.com"
+
+gcloud iam service-accounts create ${TEMPO_SA_NAME} \
+    --display-name="Tempo Storage Service Account"
+
+gcloud storage buckets add-iam-policy-binding gs://${TEMPO_TRACES_BUCKET_NAME} \
+    --member="serviceAccount:${TEMPO_SA_EMAIL}" \
+    --role="roles/storage.objectUser"
+
+gcloud iam service-accounts add-iam-policy-binding ${TEMPO_SA_EMAIL} \
+    --role="roles/iam.workloadIdentityUser" \
+    --member="serviceAccount:${PROJECT_ID}.svc.id.goog[${MONITORING_NAMESPACE}/${TEMPO_SA_NAME}]"
+
+FRONTEND_SA_EMAIL="${FRONTEND_SA_NAME}@${PROJECT_ID}.iam.gserviceaccount.com"
+
+gcloud iam service-accounts create ${FRONTEND_SA_NAME} \
+    --display-name="Frontend Service Account"
+
+gcloud projects add-iam-policy-binding ${PROJECT_ID} \
+    --member="serviceAccount:${FRONTEND_SA_EMAIL}" \
+    --role="roles/artifactregistry.reader"
+
+gcloud projects add-iam-policy-binding ${PROJECT_ID} \
+    --member="serviceAccount:${FRONTEND_SA_EMAIL}" \
     --role="roles/artifactregistry.writer"
 
-gcloud projects add-iam-policy-binding $PROJECT_ID \
-    --member="serviceAccount:${CLOUDBUILD_SA_EMAIL}" \
-    --role="roles/logging.logWriter"
+gcloud iam service-accounts add-iam-policy-binding ${FRONTEND_SA_EMAIL} \
+    --role="roles/iam.workloadIdentityUser" \
+    --member="serviceAccount:${PROJECT_ID}.svc.id.goog[${PRODUCTION_NAMESPACE}/${FRONTEND_SA_NAME}]"
 
-gcloud projects add-iam-policy-binding $PROJECT_ID \
-    --member="serviceAccount:${CLOUDBUILD_SA_EMAIL}" \
-    --role="roles/cloudbuild.builds.builder"
-
-echo """
-Create a service account with GCS access
-Create a service account with cloud SQL access
-Create a service account with artifact registry access
-Create a key that will be stored locally in ./mlflow_credentials ...
-"""
-MLFLOW_SA_NAME=mlflow-account
 MLFLOW_SA_EMAIL="${MLFLOW_SA_NAME}@${PROJECT_ID}.iam.gserviceaccount.com"
 
-gcloud iam service-accounts create ${MLFLOW_SA_NAME}
+gcloud iam service-accounts create ${MLFLOW_SA_NAME} \
+    --display-name="MLflow Service Account"
 
-gcloud projects add-iam-policy-binding $PROJECT_ID \
-  --member "serviceAccount:${MLFLOW_SA_EMAIL}" \
-  --role "roles/storage.admin"
+gcloud storage buckets add-iam-policy-binding gs://${MLFLOW_BUCKET_NAME} \
+    --member="serviceAccount:${MLFLOW_SA_EMAIL}" \
+    --role="roles/storage.objectUser"
 
-gcloud projects add-iam-policy-binding $PROJECT_ID \
-  --member "serviceAccount:${MLFLOW_SA_EMAIL}" \
-  --role "roles/cloudsql.admin"
-
-gcloud projects add-iam-policy-binding $PROJECT_ID \
-  --member "serviceAccount:${MLFLOW_SA_EMAIL}" \
-  --role "roles/artifactregistry.reader"
+gcloud projects add-iam-policy-binding ${PROJECT_ID} \
+    --member="serviceAccount:${MLFLOW_SA_EMAIL}" \
+    --role="roles/cloudsql.admin"
 
 gcloud iam service-accounts keys create $MLFLOW_CREDENTIALS \
-      --iam-account=${MLFLOW_SA_EMAIL}
+    --iam-account="${MLFLOW_SA_EMAIL}"
 
+KSERVE_SA_EMAIL="${KSERVE_SA_NAME}@${PROJECT_ID}.iam.gserviceaccount.com"
+
+gcloud iam service-accounts create ${KSERVE_SA_NAME} \
+    --display-name="KSERVE Service Account"
+
+gcloud storage buckets add-iam-policy-binding gs://${MODEL_BUCKET_NAME} \
+    --member="serviceAccount:${KSERVE_SA_EMAIL}" \
+    --role="roles/storage.objectUser"
+
+gcloud iam service-accounts add-iam-policy-binding ${KSERVE_SA_EMAIL} \
+    --role="roles/iam.workloadIdentityUser" \
+    --member="serviceAccount:${PROJECT_ID}.svc.id.goog[${PRODUCTION_NAMESPACE}/${KSERVE_SA_NAME}]"
+
+API_SA_EMAIL="${API_SA_NAME}@${PROJECT_ID}.iam.gserviceaccount.com"
+
+gcloud iam service-accounts create ${API_SA_NAME} \
+    --display-name="API Server Service Account"
+
+gcloud projects add-iam-policy-binding ${PROJECT_ID} \
+    --member="serviceAccount:${API_SA_EMAIL}" \
+    --role="roles/artifactregistry.reader"
+
+gcloud projects add-iam-policy-binding ${PROJECT_ID} \
+    --member="serviceAccount:${API_SA_EMAIL}" \
+    --role="roles/artifactregistry.writer"
+
+gcloud iam service-accounts add-iam-policy-binding ${API_SA_EMAIL} \
+    --role="roles/iam.workloadIdentityUser" \
+    --member="serviceAccount:${PROJECT_ID}.svc.id.goog[${PRODUCTION_NAMESPACE}/${API_SA_NAME}]"
+
+gcloud projects add-iam-policy-binding ${PROJECT_ID} \
+    --member="serviceAccount:${API_SA_EMAIL}" \
+    --role="roles/cloudsql.admin"
+
+GITHUB_ACTIONS_SA_EMAIL="${GITHUB_ACTIONS_SA_NAME}@${PROJECT_ID}.iam.gserviceaccount.com"
+
+gcloud iam service-accounts create ${GITHUB_ACTIONS_SA_NAME} \
+    --display-name="GitHub Actions Service Account"
+
+gcloud projects add-iam-policy-binding ${PROJECT_ID} \
+    --member="serviceAccount:${GITHUB_ACTIONS_SA_EMAIL}" \
+    --role="roles/artifactregistry.writer"
+
+gcloud projects add-iam-policy-binding ${PROJECT_ID} \
+    --member="serviceAccount:${GITHUB_ACTIONS_SA_EMAIL}" \
+    --role="roles/container.clusterViewer"
+
+gcloud projects add-iam-policy-binding ${PROJECT_ID} \
+    --member="serviceAccount:${GITHUB_ACTIONS_SA_EMAIL}" \
+    --role="roles/container.developer"
 
 
 echo """
-Add the custom mlflow image in to the artifact registry ...
+Create Artifact Registry repository ...
 """
-gcloud artifacts repositories create $MLFLOW_REPO \
+gcloud artifacts repositories create $ARTIFACT_REPO \
     --repository-format=docker \
-    --location=us-central1 \
-    --description="Docker repository for MLflow images"
+    --location=$ZONE \
+    --description="Docker repository for storing application images"
 
-gcloud builds submit services/mlflow \
-    --config=services/mlflow/cloudbuild.yaml \
-    --service-account="projects/${PROJECT_ID}/serviceAccounts/${CLOUDBUILD_SA_EMAIL}" \
-    --substitutions=_TAG_NAME=$TAG_NAME,_MLFLOW_REPO="$MLFLOW_REPO"
+echo """
+Configure Docker to authenticate with Artifact Registry ...
+"""
+gcloud auth configure-docker ${ZONE}-docker.pkg.dev
+
+gcloud projects add-iam-policy-binding ${PROJECT_ID} \
+    --member="user:${USER_EMAIL}@gmail.com" \
+    --role="roles/artifactregistry.writer"
+
+echo """
+Create GKE cluster (Autopilot mode) ...
+"""
+gcloud container clusters create-auto $GKE_CLUSTER_NAME \
+    --region=$ZONE \
+    --project=$PROJECT_ID

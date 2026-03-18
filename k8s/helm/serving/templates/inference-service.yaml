@@ -7,6 +7,7 @@ metadata:
     autoscaling.knative.dev/max-scale: "{{ .Values.autoscaling.maxReplicas }}"
     autoscaling.knative.dev/scale-to-zero-pod-retention-period: {{ .Values.autoscaling.scaleToZeroPodRetentionPeriod }}
     autoscaling.knative.dev/target: "{{ .Values.autoscaling.scaleTarget }}"
+    timeout: {{ .Values.autoscaling.requestTimeout }}
 spec:
   predictor:
     minReplicas: {{ .Values.autoscaling.minReplicas }}
@@ -20,6 +21,8 @@ spec:
       env:
       - name: GOOGLE_CLOUD_PROJECT
         value: "{{ .Values.serviceAccount.gcpProject }}"
+      - name: TS_RESPONSE_TIMEOUT
+        value: "{{ .Values.predictor.torchserveResponseTimeout }}"
       resources:
         limits:
           cpu: {{ .Values.resources.limits.cpu }}

@@ -5,6 +5,7 @@ autoscaling:
   maxReplicas: 3
   scaleTarget: 5
   scaleToZeroPodRetentionPeriod: "900s"
+  requestTimeout: "300s"
 
 resources:
   limits:
@@ -21,3 +22,4 @@ serviceAccount:
 
 predictor:
   storageUri: "gs://model_aide/bird_classification/v1"
+  torchserveResponseTimeout: "120"
