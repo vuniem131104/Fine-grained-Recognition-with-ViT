@@ -1,0 +1,86 @@
+version: "3.9"
+
+networks:
+  aide1:
+    driver: bridge
+
+services:
+  postgres:
+    image: postgres:15
+    container_name: mlflow-postgres
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      POSTGRES_DB: ${MAIN_DB}
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    ports:
+      - "15432:5432"
+    networks:
+      - aide1
+
+  api:
+    build:
+      dockerfile: ./services/api/Dockerfile
+      tags:
+        - bird-classification-api:latest
+    container_name: bird-api
+    volumes:
+      - type: bind
+        source: ./services/api
+        target: /app/services/api
+    environment:
+      HTTP_PORT: ${HTTP_PORT}
+      WORKERS: ${WORKERS}
+      KSERVE_MODEL_URL: ${KSERVE_MODEL_URL}
+      KSERVE_INFERENCE_KEY: ${KSERVE_INFERENCE_KEY}
+      POSTGRES_HOST: ${POSTGRES_HOST}
+      POSTGRES_PORT: ${POSTGRES_PORT}
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      POSTGRES_DB: ${MAIN_DB}
+    ports:
+      - "8000:8000"
+    networks:
+      - aide1
+
+  frontend:
+    build:
+      dockerfile: ./services/frontend/Dockerfile
+      tags:
+        - bird-classification-frontend:latest
+    container_name: bird-frontend
+    volumes:
+      - type: bind
+        source: ./services/frontend
+        target: /app/services/frontend
+    environment:
+      API_URL: ${API_URL}
+    ports:
+      - "8501:8501"
+    networks:
+      - aide1
+
+  kserve:
+    image: pytorch/torchserve:latest-cpu
+    container_name: kserve-predictor
+    user: root
+    ports:
+      - "8085:8085"
+      - "8090:8090"
+    volumes:
+      - ./models/bird_classification/model-store:/home/model-server/model-store
+      - ./models/bird_classification/config/config.properties:/home/model-server/config.properties
+    environment:
+      - TS_SERVICE_ENVELOPE=kservev2
+    command: 
+      - torchserve 
+      - --start 
+      - --model-store /home/model-server/model-store
+      - --models all 
+      - --ts-config /home/model-server/config.properties
+    networks:
+      - aide1
+
+volumes:
+  postgres_data:

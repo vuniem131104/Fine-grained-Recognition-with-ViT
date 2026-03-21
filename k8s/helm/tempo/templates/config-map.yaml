@@ -1,0 +1,57 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: tempo-config
+  namespace: {{ .Values.namespace }}
+data:
+  tempo.yaml: |
+    server:
+      http_listen_port: {{ .Values.tempo.httpPort }}
+      grpc_listen_port: {{ .Values.tempo.grpcPort }}
+
+    distributor:
+      receivers:
+        otlp:
+          protocols:
+            grpc:
+              endpoint: 0.0.0.0:{{ .Values.tempo.otlpGrpcPort }}
+            http:
+              endpoint: 0.0.0.0:{{ .Values.tempo.otlpHttpPort }}
+
+    ingester:
+      max_block_duration: 5m
+
+    compactor:
+      compaction:
+        block_retention: {{ .Values.storage.blocksRetention }}
+
+    storage:
+      trace:
+        backend: gcs
+        gcs:
+          bucket_name: {{ .Values.storage.gcs.bucketName }}
+        wal:
+          path: {{ .Values.storage.path }}/wal
+
+    metrics_generator:
+      registry:
+        external_labels:
+          source: tempo
+      storage:
+        path: {{ .Values.storage.path }}/generator/wal
+        remote_write:
+          - url: {{ .Values.prometheus.endpoint }}
+            send_exemplars: true
+      processor:
+        service_graphs:
+          dimensions:
+            - http.method
+        span_metrics:
+          dimensions:
+            - http.method
+            - http.status_code
+
+    overrides:
+      defaults:
+        metrics_generator:
+          processors: [service-graphs, span-metrics]

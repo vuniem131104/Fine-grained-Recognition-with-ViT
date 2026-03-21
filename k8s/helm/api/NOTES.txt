@@ -1,0 +1,11 @@
+# API Helm Chart
+
+1. Get status with: `helm status api`
+2. View values with: `helm get values api`
+3. View manifests with: `helm get manifest api`
+
+To upgrade:
+  helm upgrade api ./k8s/helm/api
+
+To delete:
+  helm uninstall api

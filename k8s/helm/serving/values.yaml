@@ -1,0 +1,25 @@
+modelName: birds-model
+
+autoscaling:
+  minReplicas: 0
+  maxReplicas: 3
+  scaleTarget: 5
+  scaleToZeroPodRetentionPeriod: "900s"
+  requestTimeout: "300s"
+
+resources:
+  limits:
+    cpu: "1500m"
+    memory: "3Gi"
+  requests:
+    cpu: "500m"
+    memory: "1Gi"
+
+serviceAccount:
+  name: kserve-sa
+  gcpServiceAccount: kserve-sa@project-2a55a756-9eba-4a36-8c6.iam.gserviceaccount.com
+  gcpProject: project-2a55a756-9eba-4a36-8c6
+
+predictor:
+  storageUri: "gs://model_aide/bird_classification/v1"
+  torchserveResponseTimeout: "120"

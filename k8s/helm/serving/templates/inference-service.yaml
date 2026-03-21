@@ -1,0 +1,32 @@
+apiVersion: serving.kserve.io/v1beta1
+kind: InferenceService
+metadata:
+  name: {{ .Values.modelName }}
+  annotations:
+    autoscaling.knative.dev/min-scale: "{{ .Values.autoscaling.minReplicas }}"
+    autoscaling.knative.dev/max-scale: "{{ .Values.autoscaling.maxReplicas }}"
+    autoscaling.knative.dev/scale-to-zero-pod-retention-period: {{ .Values.autoscaling.scaleToZeroPodRetentionPeriod }}
+    autoscaling.knative.dev/target: "{{ .Values.autoscaling.scaleTarget }}"
+    timeout: {{ .Values.autoscaling.requestTimeout }}
+spec:
+  predictor:
+    minReplicas: {{ .Values.autoscaling.minReplicas }}
+    maxReplicas: {{ .Values.autoscaling.maxReplicas }}
+    scaleTarget: {{ .Values.autoscaling.scaleTarget }}
+    scaleMetric: concurrency
+    serviceAccountName: {{ .Values.serviceAccount.name }}
+    pytorch:
+      protocolVersion: v2
+      storageUri: {{ .Values.predictor.storageUri }}
+      env:
+      - name: GOOGLE_CLOUD_PROJECT
+        value: "{{ .Values.serviceAccount.gcpProject }}"
+      - name: TS_RESPONSE_TIMEOUT
+        value: "{{ .Values.predictor.torchserveResponseTimeout }}"
+      resources:
+        limits:
+          cpu: {{ .Values.resources.limits.cpu }}
+          memory: {{ .Values.resources.limits.memory }}
+        requests:
+          cpu: {{ .Values.resources.requests.cpu }}
+          memory: {{ .Values.resources.requests.memory }}

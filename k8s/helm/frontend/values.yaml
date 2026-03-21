@@ -1,0 +1,31 @@
+namespace: aide-production
+
+frontend:
+  replicaCount: 1
+  image:
+    repository: us-central1-docker.pkg.dev/project-2a55a756-9eba-4a36-8c6/bird-classification/bird-classification-frontend
+    tag: "latest"
+    pullPolicy: Always
+  port: 8501
+  resources:
+    requests:
+      cpu: "250m"
+      memory: "512Mi"
+    limits:
+      cpu: "500m"
+      memory: "1Gi"
+
+serviceAccount:
+  name: frontend-sa
+  gcpServiceAccount: "frontend-sa@project-2a55a756-9eba-4a36-8c6.iam.gserviceaccount.com"
+
+service:
+  type: ClusterIP
+  port: 8501
+  targetPort: 8501
+
+ingress:
+  enabled: true
+  host: "bird-classification-frontend.aide-production.136.114.159.18.sslip.io"
+  ingressClassName: nginx
+  rewriteTarget: "/"

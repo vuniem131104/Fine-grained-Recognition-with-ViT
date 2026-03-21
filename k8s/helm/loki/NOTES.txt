@@ -1,0 +1,11 @@
+# Loki Helm Chart
+
+1. Get status with: `helm status loki`
+2. View values with: `helm get values loki`
+3. View manifests with: `helm get manifest loki`
+
+To upgrade:
+  helm upgrade loki ./k8s/helm/loki
+
+To delete:
+  helm uninstall loki
