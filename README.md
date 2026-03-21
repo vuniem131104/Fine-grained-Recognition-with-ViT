@@ -62,42 +62,43 @@ An end-to-end MLOps project for fine-grained bird species classification using a
 ```
 .
 ├── .github/workflows/
-│   └── ci-cd.yml                  # GitHub Actions CI/CD pipeline
-├── k8s/helm/                      # Helm charts for Kubernetes deployment
-│   ├── api/                       # FastAPI backend
-│   ├── frontend/                  # Streamlit frontend
-│   ├── serving/                   # KServe InferenceService
-│   ├── grafana/                   # Grafana dashboards
-│   ├── loki/                      # Log aggregation
-│   ├── tempo/                     # Distributed tracing
-│   ├── prometheus/                # Metrics collection
-│   └── alloy/                     # Grafana Alloy (collector)
+│   └── ci-cd.yml                                # GitHub Actions CI/CD pipeline
+├── k8s/helm/                                    # Helm charts for Kubernetes deployment
+│   ├── api/                                     # FastAPI backend
+│   ├── frontend/                                # Streamlit frontend
+│   ├── serving/                                 # KServe InferenceService
+│   ├── grafana/                                 # Grafana dashboards
+│   ├── loki/                                    # Log aggregation
+│   ├── tempo/                                   # Distributed tracing
+│   ├── prometheus/                              # Metrics collection
+│   └── alloy/                                   # Grafana Alloy (collector)
 ├── models/
 │   ├── bird_classification/
-│   │   └── config/config.properties   # TorchServe configuration
-│   │   └── model-store/bird_classification.mar # TorchServe MAR archive for ViT model
-|   |    
+│   │   └── config/config.properties             # TorchServe configuration
+│   │   └── model-store/bird_classification.mar  # TorchServe MAR archive for ViT model
 │   └── bird_detection/
-│       └── yolov8n.pt             # YOLOv8 bird detection model
+│       └── yolov8n.pt                           # YOLOv8 bird detection model
 ├── notebooks/
 │   └── birds_classification.ipynb # Training notebook
 ├── scripts/
-│   ├── create_infra.sh            # GCP infrastructure provisioning
-│   ├── create_mar.sh              # TorchServe MAR archive creation
-│   ├── handler.py                 # Custom TorchServe handler
-│   ├── model.py                   # ViT model definition
-│   └── db.py                      # Database utilities
+│   ├── create_gcp_infra.sh                      # GCP infrastructure provisioning
+│   ├── build_torchserve_file.sh                 # TorchServe MAR archive creation
+|── helpers/
+│   ├── model_definition.py                      # Model definition for TorchServe
+│   └── model_process_handler.py                 # Model inference handler for TorchServe
+├── utils/
+│   └── create_prediction_table.py               # Script to create model_predictions table in PostgreSQL
 ├── services/
-│   ├── api/                       # FastAPI service
+│   ├── api/                                     # FastAPI service
 │   │   ├── Dockerfile
-│   │   ├── src/api/__init__.py    # API application code
-│   │   └── tests/test_api.py      # Unit tests
-│   └── frontend/                  # Streamlit service
+│   │   ├── src/api/__init__.py                  # API application code
+│   │   └── tests/test_api.py                    # Unit tests
+│   └── frontend/                                # Streamlit service
 │       ├── Dockerfile
-│       └── src/frontend/app.py    # Frontend application code
-├── docker-compose.yml             # Local development setup
-├── pyproject.toml                 # uv workspace configuration
-└── requirements.txt               # Pinned dependencies
+│       └── src/frontend/app.py                  # Frontend application code
+├── docker-compose.yml                           # Local development setup
+├── pyproject.toml                               # uv workspace configuration
+└── requirements.txt                             # Pinned dependencies
 ```
 
 ---
@@ -210,7 +211,7 @@ The UI is shown in the screenshot below:
 4. **Create model_predictions table in PostgreSQL:**
 
    ```bash
-   python3 scripts/db.py
+   python3 utils/create_prediction_table.py
    ```
 
 5. **Access the application:**
@@ -283,10 +284,10 @@ Model training is performed in the Jupyter notebook at `notebooks/birds_classifi
 
 ## Model Packaging (MAR Archive)
 
-The `scripts/create_mar.sh` script creates a TorchServe Model Archive (.mar) from the trained model:
+The `scripts/build_torchserve_file.sh` script creates a TorchServe Model Archive (.mar) from the trained model:
 
 ```bash
-bash scripts/create_mar.sh
+bash scripts/build_torchserve_file.sh
 ```
 
 This script:
@@ -312,7 +313,7 @@ gcloud storage cp models/bird_classification/model-store/ "gs://${MODEL_BUCKET_N
 Provision all required GCP resources with:
 
 ```bash
-bash scripts/create_infra.sh
+bash scripts/create_gcp_infra.sh
 ```
 
 This creates:
@@ -373,17 +374,17 @@ Push/PR to master/main
        │                           │
        ▼                           ▼
 ┌─ test-api ──────────┐   ┌─ build-push-frontend ─┐
-│  pytest + coverage   │   │  Docker build & push   │
-│  (≥80% threshold)   │   │  to Artifact Registry  │
+│  pytest + coverage  │   │  Docker build & push  │
+│  (≥80% threshold)   │   │  to Artifact Registry │
 └──────┬──────────────┘   └──────┬────────────────┘
        ▼                         ▼
-┌─ build-push-api ────┐   ┌─ deploy-frontend ─────┐
-│  Docker build & push │   │  helm upgrade to GKE  │
-│  to Artifact Registry│   └───────────────────────┘
-└──────┬──────────────┘
+┌─ build-push-api ─────┐   ┌─ deploy-frontend ────┐
+│  Docker build & push │   │  helm upgrade to GKE │
+│  to Artifact Registry│   └──────────────────────┘
+└──────┬───────────────┘
        ▼
 ┌─ deploy-api ────────┐
-│  helm upgrade to GKE │
+│  helm upgrade to GKE│
 └─────────────────────┘
 ```
 
