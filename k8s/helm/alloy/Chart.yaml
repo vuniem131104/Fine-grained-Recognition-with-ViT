@@ -1,0 +1,11 @@
+apiVersion: v2
+name: alloy
+description: Helm chart for Grafana Alloy monitoring agent
+type: application
+version: 0.1.0
+appVersion: "1.7.1"
+keywords:
+  - monitoring
+  - logs
+  - metrics
+  - observability

@@ -1,0 +1,11 @@
+# Alloy Helm Chart
+
+1. Get status with: `helm status alloy`
+2. View values with: `helm get values alloy`
+3. View manifests with: `helm get manifest alloy`
+
+To upgrade:
+  helm upgrade alloy ./k8s/helm/alloy
+
+To delete:
+  helm uninstall alloy

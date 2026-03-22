@@ -1,0 +1,15 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: tempo-headless
+  namespace: {{ .Values.namespace }}
+  labels:
+    app: tempo
+spec:
+  clusterIP: None
+  ports:
+    - name: http
+      port: {{ .Values.service.httpPort }}
+      targetPort: http
+  selector:
+    app: tempo

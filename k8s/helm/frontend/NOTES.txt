@@ -1,0 +1,18 @@
+1. Access the frontend:
+{{- if .Values.ingress.enabled }}
+  Via Ingress: http://{{ .Values.ingress.host }}
+{{- else }}
+  Via port-forward:
+  kubectl port-forward --namespace {{ .Values.namespace }} svc/bird-classification-frontend 8501:{{ .Values.service.port }}
+  
+  Then open: http://localhost:8501
+{{- end }}
+
+2. Monitor the deployment:
+  kubectl get pods --namespace {{ .Values.namespace }} -l app=bird-classification-frontend
+
+3. View logs from the frontend:
+  kubectl logs --namespace {{ .Values.namespace }} -l app=bird-classification-frontend -f
+
+Note: The frontend connects to the bird-classification-api service within the cluster.
+Make sure the API is deployed and running in the same namespace.

@@ -1,0 +1,37 @@
+[project]
+name = "project-aide1"
+version = "0.1.0"
+description = "Add your description here"
+readme = "README.md"
+requires-python = ">=3.13"
+dependencies = []
+
+[tool.uv.workspace]
+members = [
+    "services/api",
+    "services/frontend",
+]
+
+[dependency-groups]
+dev = [
+    "boto3>=1.42.34",
+    "captum>=0.7.0",
+    "evidently>=0.7.20",
+    "flake8>=7.3.0",
+    "google-cloud-storage>=3.8.0",
+    "isort>=7.0.0",
+    "matplotlib>=3.10.8",
+    "matplotlib-inline>=0.2.1",
+    "minio>=7.2.20",
+    "mlflow[mlserver]>=3.5.1",
+    "mlserver>=1.2.1",
+    "mlserver-mlflow>=1.7.1",
+    "numpy>=2.4.1",
+    "pandas>=2.3.3",
+    "pre-commit>=4.5.1",
+    "tdqm>=0.0.1",
+    "torch-model-archiver>=0.12.0",
+    "torch-workflow-archiver>=0.2.15",
+    "torchserve>=0.12.0",
+    "ultralytics>=8.4.21",
+]

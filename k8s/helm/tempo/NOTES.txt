@@ -1,0 +1,11 @@
+# Tempo Helm Chart
+
+1. Get status with: `helm status tempo`
+2. View values with: `helm get values tempo`
+3. View manifests with: `helm get manifest tempo`
+
+To upgrade:
+  helm upgrade tempo ./k8s/helm/tempo
+
+To delete:
+  helm uninstall tempo

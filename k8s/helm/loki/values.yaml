@@ -1,0 +1,32 @@
+namespace: aide-monitoring
+
+loki:
+  replicas: 1
+  image: grafana/loki:3.4.2
+  httpPort: 3100
+  grpcPort: 9096
+  resources:
+    requests:
+      cpu: "100m"
+      memory: "256Mi"
+    limits:
+      cpu: "250m"
+      memory: "512Mi"
+
+serviceAccount:
+  name: loki
+  gcpServiceAccount: "loki-sa@project-2a55a756-9eba-4a36-8c6.iam.gserviceaccount.com"
+
+storage:
+  gcsBucket: loki-grafana-chunks-bucket
+  rulerBucket: loki-grafana-ruler-bucket
+
+config:
+  schemaFrom: "2024-04-01"
+  retentionPeriod: 168h  # 7 days
+  alertmanagerUrl: "http://localhost:9093"
+
+service:
+  type: ClusterIP
+  httpPort: 3100
+  grpcPort: 9096
