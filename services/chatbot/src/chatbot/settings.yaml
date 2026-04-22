@@ -1,0 +1,27 @@
+query_enricher:
+  model: "gpt-4.1"
+  temperature: 0.0
+  top_p: 1.0
+  n: 1
+  frequency_penalty: 0.0
+  max_completion_tokens: 1024
+
+answer_generator:
+  model: "gpt-4.1"
+  temperature: 0.0
+  top_p: 1.0
+  n: 1
+  frequency_penalty: 0.0
+  max_completion_tokens: 8192
+
+litellm:
+  url: "http://litellm_service:4000"
+  token: "abc123"
+  model: "gpt-4.1"
+  temperature: 0.0
+  top_p: 1.0
+  n: 1
+  frequency_penalty: 0.0
+  max_completion_tokens: 8192
+  dimension: 1536
+  embedding_model: "text-embedding-3-large"

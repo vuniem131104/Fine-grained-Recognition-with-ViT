@@ -12,5 +12,5 @@ class ImageClassifier(VisionTransformer):
             num_heads=12,
             hidden_dim=768,
             mlp_dim=3072,
-            num_classes=50,
+            num_classes=200,
         )

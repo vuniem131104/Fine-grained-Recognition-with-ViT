@@ -1,0 +1,181 @@
+networks:
+  aide1:
+    driver: bridge
+
+services:
+  postgres:
+    image: postgres:15
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      POSTGRES_DB: ${MAIN_DB}
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    ports:
+      - "15432:5432"
+    networks:
+      - aide1
+
+  litellm_service:
+    image: ghcr.io/berriai/litellm:main-latest
+    ports:
+      - "9510:4000"
+    networks:
+      - aide1
+    volumes:
+      - ./config.yaml:/app/config.yaml
+    command:
+      - "--config=/app/config.yaml"
+    environment:
+      - LLM_API_KEY=${LLM_API_KEY}
+      - LLM_API_BASE=${LLM_API_BASE}
+      - LLM_API_VERSION=${LLM_API_VERSION}
+
+  frontend:
+    build:
+      dockerfile: ./services/frontend/Dockerfile
+      tags:
+        - bird-chatbot-frontend:latest
+      args:
+        REACT_APP_AUTH_API_URL: ${REACT_APP_AUTH_API_URL:-http://localhost:8001}
+        REACT_APP_CHATBOT_API_URL: ${REACT_APP_CHATBOT_API_URL:-http://localhost:8000}
+    container_name: bird-frontend
+    ports:
+      - "5007:5007"
+    networks:
+      - aide1
+
+  kserve:
+    image: pytorch/torchserve:latest-cpu
+    container_name: kserve-predictor
+    user: root
+    ports:
+      - "8085:8085"
+      - "8090:8090"
+    volumes:
+      - ./models/bird_classification/model-store:/home/model-server/model-store
+      - ./models/bird_classification/config/config.properties:/home/model-server/config.properties
+    environment:
+      - TS_SERVICE_ENVELOPE=kservev2
+    command: 
+      - torchserve 
+      - --start 
+      - --model-store /home/model-server/model-store
+      - --models all 
+      - --ts-config /home/model-server/config.properties
+    networks:
+      - aide1
+
+  qdrant:
+    image: qdrant/qdrant:latest
+    restart: unless-stopped
+    container_name: qdrant
+    ports:
+      - 6333:6333
+      - 6334:6334
+    expose:
+      - 6333
+      - 6334
+      - 6335
+    configs:
+      - source: qdrant_config
+        target: /qdrant/config/production.yaml
+    volumes:
+      - ./qdrant_data:/qdrant/storage
+    networks:
+      - aide1
+
+  authentication:
+    build:
+      dockerfile: ./services/authentication/Dockerfile
+      tags:
+        - bird-authentication:latest
+    container_name: bird-authentication
+    volumes:
+      - type: bind
+        source: ./services/authentication
+        target: /app/services/authentication
+    environment:
+      PORT: 8001
+      POSTGRES_HOST: ${POSTGRES_HOST}
+      POSTGRES_PORT: ${POSTGRES_PORT}
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      MAIN_DB: ${MAIN_DB}
+      TOKEN_EXPIRATION_HOURS: ${TOKEN_EXPIRATION_HOURS:-24}
+    ports:
+      - "8001:8001"
+    networks:
+      - aide1
+    depends_on:
+      - postgres
+
+  chatbot:
+    build:
+      dockerfile: ./services/chatbot/Dockerfile
+      tags:
+        - bird-chatbot:latest
+    container_name: bird-chatbot
+    volumes:
+      - type: bind
+        source: ./services/chatbot
+        target: /app/services/chatbot
+    environment:
+      PORT: 8000
+      WORKERS: 1
+      KSERVE_MODEL_URL: ${KSERVE_MODEL_URL}
+      RAG_URL: ${RAG_URL}
+      POSTGRES_HOST: ${POSTGRES_HOST}
+      POSTGRES_PORT: ${POSTGRES_PORT}
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      MAIN_DB: ${MAIN_DB}
+    ports:
+      - "8000:8000"
+    networks:
+      - aide1
+    depends_on:
+      - postgres
+
+  rag:
+    build:
+      dockerfile: ./services/rag/Dockerfile
+      tags:
+        - bird-rag:latest
+    container_name: bird-rag
+    volumes:
+      - type: bind
+        source: ./services/rag
+        target: /app/services/rag
+    environment:
+      PORT: 3010
+      WORKERS: 1
+      QDRANT_URL: ${QDRANT_URL}
+      QDRANT_COLLECTION_NAME: ${QDRANT_COLLECTION_NAME}
+      QDRANT_VECTOR_SIZE: ${QDRANT_VECTOR_SIZE}
+      RAG_TOP_K: ${RAG_TOP_K}
+      RAG_SCORE_THRESHOLD: ${RAG_SCORE_THRESHOLD}
+      POSTGRES_HOST: ${POSTGRES_HOST}
+      POSTGRES_PORT: ${POSTGRES_PORT}
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      POSTGRES_DB: ${MAIN_DB}
+      EMBEDDING_MODEL: ${EMBEDDING_MODEL}
+      LLM_API_KEY: ${LLM_API_KEY}
+      LLM_API_BASE: ${LLM_API_BASE}
+      LLM_API_VERSION: ${LLM_API_VERSION}
+    ports:
+      - "3010:3010"
+    networks:
+      - aide1
+    depends_on:
+      - qdrant
+      - postgres
+
+configs:
+  qdrant_config:
+    content: |
+      log_level: INFO
+
+volumes:
+  postgres_data:

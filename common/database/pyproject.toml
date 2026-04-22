@@ -1,0 +1,22 @@
+[project]
+name = "database"
+version = "0.1.0"
+description = "Shared database layer with SQLAlchemy and Alembic"
+readme = "README.md"
+authors = [
+    { name = "vuniem131104", email = "niemhoalongvu@gmail.com" }
+]
+requires-python = ">=3.13"
+dependencies = [
+    "sqlalchemy>=2.0.0",
+    "alembic>=1.13.0",
+    "psycopg2-binary>=2.9.11",
+    "python-dotenv>=1.0.0",
+]
+
+[project.scripts]
+database = "database:main"
+
+[build-system]
+requires = ["uv_build>=0.9.4,<0.10.0"]
+build-backend = "uv_build"

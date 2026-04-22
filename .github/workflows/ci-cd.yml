@@ -12,8 +12,8 @@ env:
   GAR_REPOSITORY: bird-classification
   GKE_CLUSTER: ${{ secrets.GKE_CLUSTER }}
   GKE_ZONE: ${{ secrets.GKE_ZONE }}
-  API_IMAGE: bird-classification-api
-  FRONTEND_IMAGE: bird-classification-frontend
+  CLASSIFIER_IMAGE: bird-classification
+  FRONTEND_IMAGE: bird-chatbot-frontend
   NAMESPACE: aide-production
   WIF_PROVIDER: ${{ secrets.WIF_PROVIDER }}
   WIF_SERVICE_ACCOUNT: ${{ secrets.WIF_SERVICE_ACCOUNT }}
@@ -22,7 +22,7 @@ jobs:
   detect-changes:
     runs-on: ubuntu-latest
     outputs:
-      api: ${{ steps.filter.outputs.api }}
+      classifier: ${{ steps.filter.outputs.classifier }}
       frontend: ${{ steps.filter.outputs.frontend }}
     steps:
       - uses: actions/checkout@v4
@@ -30,8 +30,8 @@ jobs:
         id: filter
         with:
           filters: |
-            api:
-              - 'services/api/**'
+            classifier:
+              - 'services/classifier/**'
               - 'pyproject.toml'
               - 'uv.lock'
             frontend:
@@ -39,9 +39,9 @@ jobs:
               - 'pyproject.toml'
               - 'uv.lock'
 
-  test-api:
+  test-classifier:
     needs: detect-changes
-    if: needs.detect-changes.outputs.api == 'true'
+    if: needs.detect-changes.outputs.classifier == 'true'
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -56,13 +56,13 @@ jobs:
           python-version: "3.13"
 
       - name: Install dependencies
-        run: uv sync --package api
+        run: uv sync --package classifier
 
-      - name: Run API tests with coverage
+      - name: Run classifier tests with coverage
         working-directory: .
         run: |
-          uv run pytest tests/test_api.py \
-            --cov=services/api \
+          uv run pytest tests/test_model_prediction.py \
+            --cov=services/classifier \
             --cov-report=term-missing \
             --cov-report=xml:coverage.xml \
             --cov-fail-under=80 \
@@ -73,10 +73,10 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: coverage-report
-          path: services/api/coverage.xml
+          path: services/classifier/coverage.xml
 
-  build-push-api:
-    needs: test-api
+  build-push-classifier:
+    needs: test-classifier
     if: github.event_name == 'push'
     runs-on: ubuntu-latest
     permissions:
@@ -104,12 +104,12 @@ jobs:
         run: |
           SHORT_SHA=$(echo "${{ github.sha }}" | cut -c1-7)
           echo "version=${SHORT_SHA}" >> "$GITHUB_OUTPUT"
-          echo "full_image=${{ env.GAR_LOCATION }}-docker.pkg.dev/${{ env.GCP_PROJECT_ID }}/${{ env.GAR_REPOSITORY }}/${{ env.API_IMAGE }}" >> "$GITHUB_OUTPUT"
+          echo "full_image=${{ env.GAR_LOCATION }}-docker.pkg.dev/${{ env.GCP_PROJECT_ID }}/${{ env.GAR_REPOSITORY }}/${{ env.CLASSIFIER_IMAGE }}" >> "$GITHUB_OUTPUT"
 
-      - name: Build and push API image
+      - name: Build and push classifier image
         run: |
           docker build \
-            -f services/api/Dockerfile \
+            -f services/classifier/Dockerfile \
             -t ${{ steps.meta.outputs.full_image }}:${{ steps.meta.outputs.version }} \
             -t ${{ steps.meta.outputs.full_image }}:latest \
             .
@@ -157,8 +157,8 @@ jobs:
           docker push ${{ steps.meta.outputs.full_image }}:${{ steps.meta.outputs.version }}
           docker push ${{ steps.meta.outputs.full_image }}:latest
 
-  deploy-api:
-    needs: build-push-api
+  deploy-classifier:
+    needs: build-push-classifier
     runs-on: ubuntu-latest
     permissions:
       contents: read
@@ -181,11 +181,11 @@ jobs:
           cluster_name: ${{ env.GKE_CLUSTER }}
           location: ${{ env.GKE_ZONE }}
 
-      - name: Deploy API via Helm
+      - name: Deploy classifier via Helm
         run: |
-          helm upgrade api k8s/helm/api \
+          helm upgrade classifier k8s/helm/classifier \
             --namespace ${{ env.NAMESPACE }} \
-            --set api.image.tag=${{ needs.build-push-api.outputs.image_tag }}
+            --set classifier.image.tag=${{ needs.build-push-classifier.outputs.image_tag }}
 
   deploy-frontend:
     needs: build-push-frontend

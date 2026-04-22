@@ -1,33 +1,40 @@
-# Use official Python runtime as a parent image
-FROM python:3.13-slim
+# Build stage
+FROM node:18-alpine AS builder
 
 WORKDIR /app
 
-RUN apt-get update && apt-get install -y --no-install-recommends \
-    build-essential \
-    && rm -rf /var/lib/apt/lists/*
+# Copy package files
+COPY services/frontend/package*.json ./
 
-COPY --from=ghcr.io/astral-sh/uv:latest /uv /uvx /usr/local/bin/
+# Install dependencies
+RUN npm install
 
-ENV UV_NO_CACHE=1
+# Build args for React env vars (baked in at build time)
+ARG REACT_APP_AUTH_API_URL
+ARG REACT_APP_CHATBOT_API_URL
+ENV REACT_APP_AUTH_API_URL=$REACT_APP_AUTH_API_URL
+ENV REACT_APP_CHATBOT_API_URL=$REACT_APP_CHATBOT_API_URL
 
-COPY pyproject.toml uv.lock ./
+# Copy source code
+COPY services/frontend/public ./public
+COPY services/frontend/src ./src
 
-COPY services/frontend/pyproject.toml ./services/frontend/
-COPY services/frontend/README.md ./services/frontend/
+# Build the React app
+RUN npm run build
 
-RUN --mount=type=cache,target=/root/.cache/uv \
-    uv sync --no-install-project --no-dev
+# Production stage
+FROM node:18-alpine
 
-COPY services/frontend/src ./services/frontend/src
-COPY services/frontend/.streamlit ./services/frontend/.streamlit
+WORKDIR /app
 
-ENV STREAMLIT_SERVER_HEADLESS=true
-ENV STREAMLIT_SERVER_PORT=8501
-ENV STREAMLIT_LOGGER_LEVEL=info
+# Install serve to run the React app
+RUN npm install -g serve
 
-WORKDIR /app/services/frontend
+# Copy built app from builder
+COPY --from=builder /app/build ./build
 
-EXPOSE 8501
+# Expose port
+EXPOSE 5007
 
-CMD ["uv", "run", "streamlit", "run", "src/frontend/app.py"]
+# Start the app
+CMD ["serve", "-s", "build", "-l", "5007"]

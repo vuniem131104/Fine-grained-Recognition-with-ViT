@@ -1,0 +1,1 @@
+{"initial_version":null,"version":1,"config":{"vector_data":{"dense":{"size":1536,"distance":"Cosine","storage_type":"InRamChunkedMmap","index":{"type":"plain","options":{}},"quantization_config":null}},"sparse_vector_data":{"sparse":{"index":{"full_scan_threshold":null,"index_type":"MutableRam"},"storage_type":"mmap","modifier":"idf"}},"payload_storage_type":{"type":"mmap"}}}

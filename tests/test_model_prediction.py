@@ -4,7 +4,7 @@ import concurrent.futures
 import sys
 import time
 
-sys.path.insert(0, './services/api/src')
+sys.path.insert(0, './services/classifier/src')
 
 from api import app
 from fastapi.testclient import TestClient
