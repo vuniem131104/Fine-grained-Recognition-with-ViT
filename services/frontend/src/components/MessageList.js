@@ -26,12 +26,14 @@ const MessageList = ({ messages }) => {
         <div key={idx} className={`msg-wrap ${msg.role === 'user' ? 'user' : ''}`}>
           {msg.role === 'user' ? (
             <div className="msg-row user">
-              <div className="bubble-usr">
+              <div className="usr-stack">
                 {msg.imageUrl && (
                   <img src={msg.imageUrl} alt="uploaded" className="msg-image" />
                 )}
                 {msg.content && (
-                  <span>{msg.content}</span>
+                  <div className="bubble-usr">
+                    <span>{msg.content}</span>
+                  </div>
                 )}
               </div>
             </div>

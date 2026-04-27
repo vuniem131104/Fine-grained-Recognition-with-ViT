@@ -133,9 +133,10 @@ services:
       POSTGRES_USER: ${POSTGRES_USER}
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
       MAIN_DB: ${MAIN_DB}
-      REDPANDA_BOOTSTRAP_SERVERS: ${REDPANDA_BOOTSTRAP_SERVERS}
-      REDPANDA_REQUESTS_TOPIC: ${REDPANDA_REQUESTS_TOPIC}
-      REDPANDA_RESPONSES_TOPIC: ${REDPANDA_RESPONSES_TOPIC}
+      REDPANDA_BOOTSTRAP_SERVERS: ${REDPANDA_BOOTSTRAP_SERVERS:-redpanda:29092}
+      REDPANDA_REQUESTS_TOPIC: ${REDPANDA_REQUESTS_TOPIC:-inference-requests}
+      REDPANDA_RESULTS_TOPIC: ${REDPANDA_RESULTS_TOPIC:-inference-results}
+      INFERENCE_TIMEOUT: ${INFERENCE_TIMEOUT:-30}
     ports:
       - "8000:8000"
     networks:
@@ -215,6 +216,31 @@ services:
       - aide1
     depends_on:
       - redpanda
+
+  stream-inference:
+    build:
+      dockerfile: ./services/stream-inference/Dockerfile
+      tags:
+        - bird-stream-inference:latest
+    container_name: bird-stream-inference
+    volumes:
+      - type: bind
+        source: ./services/stream-inference
+        target: /app/services/stream-inference
+    environment:
+      REDPANDA_BOOTSTRAP_SERVERS: ${REDPANDA_BOOTSTRAP_SERVERS}
+      REDPANDA_REQUESTS_TOPIC: ${REDPANDA_REQUESTS_TOPIC}
+      REDPANDA_RESULTS_TOPIC: ${REDPANDA_RESULTS_TOPIC}
+      REDPANDA_LOGS_TOPIC: ${REDPANDA_LOGS_TOPIC}
+      REDPANDA_GROUP_ID: ${REDPANDA_GROUP_ID}
+      KSERVE_MODEL_URL: ${KSERVE_MODEL_URL}
+      MODEL_VERSION: ${MODEL_VERSION:-v1}
+      MAX_INFLIGHT: ${STREAM_MAX_INFLIGHT:-8}
+    networks:
+      - aide1
+    depends_on:
+      - redpanda
+      - kserve
 
 configs:
   qdrant_config:

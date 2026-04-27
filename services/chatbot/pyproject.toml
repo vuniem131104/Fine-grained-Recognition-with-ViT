@@ -17,7 +17,7 @@ dependencies = [
     "structlog>=23.0.0",
     "spicy>=0.16.0",
     "database",
-    "confluent-kafka>=2.14.0",
+    "aiokafka>=0.11.0",
 ]
 
 [project.scripts]

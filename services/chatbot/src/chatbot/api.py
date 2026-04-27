@@ -52,6 +52,7 @@ async def lifespan(app: FastAPI):
             settings=settings,
             http_client=_http_client,
         )
+        await _chatbot_service.tool_executor.start()
 
         logger.info("Chatbot service initialized successfully")
 
@@ -63,6 +64,8 @@ async def lifespan(app: FastAPI):
 
     finally:
         logger.info("Shutting down chatbot API")
+        if _chatbot_service:
+            await _chatbot_service.tool_executor.stop()
         if _http_client:
             await _http_client.aclose()
 

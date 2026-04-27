@@ -11,6 +11,7 @@ members = [
     "services/chatbot",
     "services/rag",
     "services/authentication",
+    "services/stream-inference",
     "common/database",
 ]
 
