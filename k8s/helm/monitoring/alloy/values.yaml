@@ -1,0 +1,21 @@
+namespace: monitoring
+
+alloy:
+  image: grafana/alloy:v1.7.1
+  replicas: 1
+  resources:
+    requests:
+      cpu: "100m"
+      memory: "128Mi"
+    limits:
+      cpu: "300m"
+      memory: "256Mi"
+
+serviceAccount:
+  name: alloy
+
+config:
+  clusterName: production
+  lokiEndpoint: "http://loki.monitoring.svc.cluster.local:3100/loki/api/v1/push"
+  prometheusEndpoint: "http://prometheus-server.monitoring.svc.cluster.local/api/v1/write"
+  tempoEndpoint: "tempo.monitoring.svc.cluster.local:4317"

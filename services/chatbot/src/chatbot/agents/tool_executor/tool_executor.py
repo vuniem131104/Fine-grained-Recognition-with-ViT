@@ -1,3 +1,4 @@
+from alembic.util import msg
 from chatbot.tools import classify, context_retrieve
 from pydantic import BaseModel
 from structlog import get_logger
@@ -7,6 +8,9 @@ import asyncio
 from typing import Optional, Union
 from chatbot.agents.state import ChatbotState
 from enum import Enum
+import os
+import json
+from confluent_kafka import Producer
 
 logger = get_logger(__name__)
 
@@ -28,11 +32,30 @@ class ToolExecutorOutput(BaseModel):
 class ToolExecutorService:
     def __init__( self, http_client: httpx.AsyncClient):
         self.http_client = http_client
+        self.kafka_producer = Producer(
+            {
+                'bootstrap.servers': os.getenv('REDPANDA_BOOTSTRAP_SERVERS', ''),
+                'client.id': 'chatbot-service',
+            }
+        )
+        self.requests_topic = os.getenv('REDPANDA_REQUESTS_TOPIC', 'image-classification-requests')
         
     async def process(self, inputs: ToolExecutorInput) -> ToolExecutorOutput:
         if inputs.tool_type == ToolType.CLASSIFICATION:
             if not inputs.img_b64:
                 raise ValueError("Image data is required for classification.")
+            data = json.dumps(
+                {
+                    "img_b64": inputs.img_b64,
+                    "request_id": f"req-{os.urandom(8).hex()}",
+                }
+            )
+            self.kafka_producer.produce(
+                topic=self.requests_topic,
+                value=data,
+                on_delivery=self._delivery_report
+            )
+            self.kafka_producer.flush()
             result = await classify(self.http_client, inputs.img_b64)
         elif inputs.tool_type == ToolType.RETRIEVAL:
             result = await context_retrieve(self.http_client, inputs.query)
@@ -150,3 +173,9 @@ class ToolExecutorService:
                 },
             )
             return None
+        
+    def _delivery_report(self, err, msg):
+        if err is not None:
+            print(f"Message delivery failed: {err}")
+        else:
+            print(f"Message delivered to {msg.topic()} [{msg.partition()}]")

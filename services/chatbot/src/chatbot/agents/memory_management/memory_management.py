@@ -42,7 +42,7 @@ class MemoryManagementService:
                     history = []
                     for msg in messages[-HISTORY_LIMIT:]:
                         history.append({"role": "user", "content": msg.user_message})
-                        history.append({"role": "assistant", "content": msg.assistant_message})
+                        history.append({"role": "assistant", "content": msg.assistant_message[:500]})
                     return history, conv.id
                 logger.warning(
                     "conversation_id not found or belongs to different user",
@@ -50,7 +50,6 @@ class MemoryManagementService:
                     user_id=user_id,
                 )
 
-            # No valid conversation_id — new conversation will be created on first save
             return [], None
 
     def _save_message(
@@ -86,13 +85,3 @@ class MemoryManagementService:
             )
             logger.info("Message saved", user_id=user_id, conversation_id=str(conv.id))
             return conv.id
-
-
-def save_message(
-    user_id: int,
-    conversation_id: uuid.UUID | None,
-    user_message: str,
-    assistant_message: str,
-) -> uuid.UUID:
-    svc = MemoryManagementService()
-    return svc._save_message(user_id, conversation_id, user_message, assistant_message)

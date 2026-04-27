@@ -8,7 +8,7 @@ from alembic.config import Config
 
 
 def main() -> None:
-    cfg = Config("common/database/alembic.ini")
+    cfg = Config("common/database/src/database/alembic.ini")
     command.upgrade(cfg, "head")
     print("All tables are ready.")
 

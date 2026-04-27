@@ -13,7 +13,7 @@ spec:
     minReplicas: {{ .Values.autoscaling.minReplicas }}
     maxReplicas: {{ .Values.autoscaling.maxReplicas }}
     scaleTarget: {{ .Values.autoscaling.scaleTarget }}
-    scaleMetric: concurrency
+    scaleMetric: {{ .Values.autoscaling.scaleMetric | default "concurrency" }}
     serviceAccountName: {{ .Values.serviceAccount.name }}
     pytorch:
       protocolVersion: v2

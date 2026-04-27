@@ -1,0 +1,40 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ .Values.litellm.name }}
+  namespace: {{ .Values.namespace }}
+  labels:
+    app: {{ .Values.litellm.name }}
+spec:
+  replicas: {{ .Values.litellm.replicaCount }}
+  selector:
+    matchLabels:
+      app: {{ .Values.litellm.name }}
+  template:
+    metadata:
+      labels:
+        app: {{ .Values.litellm.name }}
+    spec:
+      containers:
+      - name: {{ .Values.litellm.name }}
+        image: {{ .Values.litellm.image.repository }}:{{ .Values.litellm.image.tag }}
+        imagePullPolicy: {{ .Values.litellm.image.pullPolicy }}
+        args:
+          - "--config"
+          - "/app/proxy_server_config.yaml"
+        ports:
+        - containerPort: {{ .Values.litellm.port }}
+          name: http
+        volumeMounts:
+        - name: config-volume
+          mountPath: /app/proxy_server_config.yaml
+          subPath: config.yaml
+        envFrom:
+        - secretRef:
+            name: litellm-secrets
+        resources:
+          {{- toYaml .Values.litellm.resources | nindent 10 }}
+      volumes:
+      - name: config-volume
+        configMap:
+          name: litellm-config-file

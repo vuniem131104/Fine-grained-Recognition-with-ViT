@@ -1,0 +1,53 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ .Values.chatbot.name }}
+  namespace: {{ .Values.namespace }}
+  labels:
+    app: {{ .Values.chatbot.name }}
+spec:
+  replicas: {{ .Values.chatbot.replicaCount }}
+  selector:
+    matchLabels:
+      app: {{ .Values.chatbot.name }}
+  template:
+    metadata:
+      labels:
+        app: {{ .Values.chatbot.name }}
+    spec:
+      serviceAccountName: {{ .Values.serviceAccount.name }}
+      containers:
+      - name: {{ .Values.chatbot.name }}
+        image: {{ .Values.chatbot.image.repository }}:{{ .Values.chatbot.image.tag }}
+        imagePullPolicy: {{ .Values.chatbot.image.pullPolicy }}
+        ports:
+        - containerPort: {{ .Values.chatbot.port }}
+          name: http
+        envFrom:
+        - secretRef:
+            name: chatbot-secrets
+        env:
+        - name: PORT
+          value: "{{ .Values.chatbot.port }}"
+        - name: WORKERS
+          value: "1"
+        - name: KSERVE_MODEL_URL
+          value: http://bird-classification-model-predictor.ai-engine.svc.cluster.local/v2/models/bird_classification
+        - name: RAG_URL
+          value: http://bird-rag.ai-engine.svc.cluster.local:80
+        resources:
+          {{- toYaml .Values.chatbot.resources | nindent 10 }}
+      - name: cloud-sql-proxy
+        image: {{ .Values.cloudSqlProxy.image }}
+        args:
+          - "--structured-logs"
+          - "--auto-iam-authn"
+          - "--port={{ .Values.cloudSqlProxy.port }}"
+          - "$(CLOUD_SQL_INSTANCE)"
+        envFrom:
+        - secretRef:
+            name: chatbot-secrets
+        securityContext:
+          runAsNonRoot: true
+        resources:
+          {{- toYaml .Values.cloudSqlProxy.resources | nindent 10 }}

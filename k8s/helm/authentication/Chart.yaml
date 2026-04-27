@@ -1,0 +1,10 @@
+apiVersion: v2
+name: authentication
+description: Helm chart for Bird Authentication deployment
+type: application
+version: 0.1.0
+appVersion: "1.0.0"
+keywords:
+  - authentication
+  - bird-authentication
+  - deployment

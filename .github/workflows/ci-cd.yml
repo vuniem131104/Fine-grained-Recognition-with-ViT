@@ -14,7 +14,7 @@ env:
   GKE_ZONE: ${{ secrets.GKE_ZONE }}
   CLASSIFIER_IMAGE: bird-classification
   FRONTEND_IMAGE: bird-chatbot-frontend
-  NAMESPACE: aide-production
+  NAMESPACE: production
   WIF_PROVIDER: ${{ secrets.WIF_PROVIDER }}
   WIF_SERVICE_ACCOUNT: ${{ secrets.WIF_SERVICE_ACCOUNT }}
 

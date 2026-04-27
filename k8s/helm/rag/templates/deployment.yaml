@@ -1,0 +1,42 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ .Values.rag.name }}
+  namespace: {{ .Values.namespace }}
+  labels:
+    app: {{ .Values.rag.name }}
+spec:
+  replicas: {{ .Values.rag.replicaCount }}
+  selector:
+    matchLabels:
+      app: {{ .Values.rag.name }}
+  template:
+    metadata:
+      labels:
+        app: {{ .Values.rag.name }}
+    spec:
+      containers:
+      - name: {{ .Values.rag.name }}
+        image: {{ .Values.rag.image.repository }}:{{ .Values.rag.image.tag }}
+        imagePullPolicy: {{ .Values.rag.image.pullPolicy }}
+        ports:
+        - containerPort: {{ .Values.rag.port }}
+          name: http
+        envFrom:
+        - secretRef:
+            name: rag-secrets
+        env:
+        - name: PORT
+          value: "{{ .Values.rag.port }}"
+        - name: WORKERS
+          value: "1"
+        - name: EMBEDDING_MODEL
+          value: "text-embedding-3-large"
+        - name: RAG_TOP_K
+          value: "5"
+        - name: RAG_SCORE_THRESHOLD 
+          value: "0.5"
+        - name: QDRANT_VECTOR_SIZE
+          value: "1536"
+        resources:
+          {{- toYaml .Values.rag.resources | nindent 10 }}

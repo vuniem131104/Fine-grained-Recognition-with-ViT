@@ -35,7 +35,7 @@ services:
     build:
       dockerfile: ./services/frontend/Dockerfile
       tags:
-        - bird-chatbot-frontend:latest
+        - bird-frontend:latest
       args:
         REACT_APP_AUTH_API_URL: ${REACT_APP_AUTH_API_URL:-http://localhost:8001}
         REACT_APP_CHATBOT_API_URL: ${REACT_APP_CHATBOT_API_URL:-http://localhost:8000}
@@ -66,24 +66,24 @@ services:
     networks:
       - aide1
 
-  qdrant:
-    image: qdrant/qdrant:latest
-    restart: unless-stopped
-    container_name: qdrant
-    ports:
-      - 6333:6333
-      - 6334:6334
-    expose:
-      - 6333
-      - 6334
-      - 6335
-    configs:
-      - source: qdrant_config
-        target: /qdrant/config/production.yaml
-    volumes:
-      - ./qdrant_data:/qdrant/storage
-    networks:
-      - aide1
+  # qdrant:
+  #   image: qdrant/qdrant:latest
+  #   restart: unless-stopped
+  #   container_name: qdrant
+  #   ports:
+  #     - 6333:6333
+  #     - 6334:6334
+  #   expose:
+  #     - 6333
+  #     - 6334
+  #     - 6335
+  #   configs:
+  #     - source: qdrant_config
+  #       target: /qdrant/config/production.yaml
+  #   volumes:
+  #     - ./qdrant_data:/qdrant/storage
+  #   networks:
+  #     - aide1
 
   authentication:
     build:
@@ -97,6 +97,7 @@ services:
         target: /app/services/authentication
     environment:
       PORT: 8001
+      WORKERS: 1
       POSTGRES_HOST: ${POSTGRES_HOST}
       POSTGRES_PORT: ${POSTGRES_PORT}
       POSTGRES_USER: ${POSTGRES_USER}
@@ -123,6 +124,8 @@ services:
     environment:
       PORT: 8000
       WORKERS: 1
+      LITELLM_TOKEN: ${LITELLM_TOKEN}
+      LITELLM_URL: ${LITELLM_URL}
       KSERVE_MODEL_URL: ${KSERVE_MODEL_URL}
       RAG_URL: ${RAG_URL}
       POSTGRES_HOST: ${POSTGRES_HOST}
@@ -130,12 +133,16 @@ services:
       POSTGRES_USER: ${POSTGRES_USER}
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
       MAIN_DB: ${MAIN_DB}
+      REDPANDA_BOOTSTRAP_SERVERS: ${REDPANDA_BOOTSTRAP_SERVERS}
+      REDPANDA_REQUESTS_TOPIC: ${REDPANDA_REQUESTS_TOPIC}
+      REDPANDA_RESPONSES_TOPIC: ${REDPANDA_RESPONSES_TOPIC}
     ports:
       - "8000:8000"
     networks:
       - aide1
     depends_on:
       - postgres
+      - redpanda
 
   rag:
     build:
@@ -151,6 +158,7 @@ services:
       PORT: 3010
       WORKERS: 1
       QDRANT_URL: ${QDRANT_URL}
+      QDRANT_CLOUD_API_KEY: ${QDRANT_CLOUD_API_KEY}
       QDRANT_COLLECTION_NAME: ${QDRANT_COLLECTION_NAME}
       QDRANT_VECTOR_SIZE: ${QDRANT_VECTOR_SIZE}
       RAG_TOP_K: ${RAG_TOP_K}
@@ -169,8 +177,44 @@ services:
     networks:
       - aide1
     depends_on:
-      - qdrant
       - postgres
+
+  redpanda:
+    image: redpandadata/redpanda:latest
+    container_name: redpanda
+    command:
+      - redpanda
+      - start
+      - --smp 1
+      - --memory 512M
+      - --reserve-memory 0M
+      - --overprovisioned
+      - --node-id 0
+      - --kafka-addr PLAINTEXT://0.0.0.0:29092,OUTSIDE://0.0.0.0:9092
+      - --advertise-kafka-addr PLAINTEXT://redpanda:29092,OUTSIDE://localhost:9092
+      - --pandaproxy-addr 0.0.0.0:8082
+      - --advertise-pandaproxy-addr localhost:8082
+    ports:
+      - "9092:9092"
+      - "29092:29092"
+      - "8082:8082"
+      - "9644:9644"
+    volumes:
+      - redpanda_data:/var/lib/redpanda/data
+    networks:
+      - aide1
+
+  redpanda-console:
+    image: redpandadata/console:latest
+    container_name: redpanda-console
+    ports:
+      - "8080:8080"
+    environment:
+      - KAFKA_BROKERS=redpanda:29092
+    networks:
+      - aide1
+    depends_on:
+      - redpanda
 
 configs:
   qdrant_config:
@@ -179,3 +223,4 @@ configs:
 
 volumes:
   postgres_data:
+  redpanda_data:

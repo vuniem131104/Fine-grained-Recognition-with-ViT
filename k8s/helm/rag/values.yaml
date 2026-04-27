@@ -1,0 +1,36 @@
+namespace: ai-engine
+
+rag:
+  name: bird-rag
+  replicaCount: 1
+  image:
+    repository: us-central1-docker.pkg.dev/project-8f21156c-3434-4d17-a8c/aide-project/bird-rag
+    tag: "latest"
+    pullPolicy: Always
+  port: 3010
+  resources:
+    requests:
+      cpu: "150m"
+      memory: "512Mi"
+    limits:
+      cpu: "500m"
+      memory: "1Gi"
+
+service:
+  type: ClusterIP
+  port: 80
+  targetPort: 3010
+
+ingress:
+  enabled: true
+  host: "bird-rag.ai-engine.35.225.173.124.sslip.io"
+  ingressClassName: nginx
+  maxBodySize: "50m"
+  name: bird-rag-ingress
+
+autoscaling:
+  enabled: true
+  minReplicas: 1
+  maxReplicas: 1
+  targetCPUUtilization: 70
+  targetMemoryUtilization: 90

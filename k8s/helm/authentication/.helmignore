@@ -1,0 +1,24 @@
+# Patterns to ignore when building packages.
+# This supports shell glob patterns, relative path patterns, and negated patterns
+# (prefixed with !).
+
+.DS_Store
+.git
+.gitignore
+.bzr
+.bzrignore
+.hg
+.hgignore
+.svn
+*.swp
+*.swo
+*~
+.idea
+*.sublime-project
+*.sublime-workspace
+.vscode/
+*.log
+
+# Local testing directories
+.test/
+test-values/

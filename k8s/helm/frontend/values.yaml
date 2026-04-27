@@ -1,31 +1,36 @@
-namespace: aide-production
+namespace: frontend
 
 frontend:
   replicaCount: 1
+  name: bird-frontend
   image:
-    repository: us-central1-docker.pkg.dev/project-2a55a756-9eba-4a36-8c6/bird-classification/bird-classification-frontend
+    repository: us-central1-docker.pkg.dev/project-8f21156c-3434-4d17-a8c/aide-project/bird-frontend
     tag: "latest"
     pullPolicy: Always
-  port: 8501
+  port: 5007
   resources:
     requests:
-      cpu: "250m"
-      memory: "512Mi"
+      cpu: "100m"
+      memory: "256Mi"
     limits:
       cpu: "500m"
       memory: "1Gi"
 
 serviceAccount:
-  name: frontend-sa
-  gcpServiceAccount: "frontend-sa@project-2a55a756-9eba-4a36-8c6.iam.gserviceaccount.com"
+  name: bird-frontend-sa
+  gcpServiceAccount: "bird-frontend-sa@project-8f21156c-3434-4d17-a8c.iam.gserviceaccount.com"
 
 service:
   type: ClusterIP
-  port: 8501
-  targetPort: 8501
+  port: 80
+  targetPort: 5007
 
 ingress:
+  name: bird-frontend-ingress
   enabled: true
-  host: "bird-classification-frontend.aide-production.136.114.159.18.sslip.io"
+  host: "bird-frontend.frontend.35.225.173.124.sslip.io"
   ingressClassName: nginx
-  rewriteTarget: "/"
+
+env:
+  authApiUrl: "http://bird-authentication.authentication.35.225.173.124.sslip.io"
+  chatbotApiUrl: "http://bird-chatbot.core.35.225.173.124.sslip.io"

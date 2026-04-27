@@ -1,0 +1,17 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: litellm-config-file
+  namespace: llm
+data:
+  config.yaml: |
+    model_list:
+      - model_name: gpt-4.1
+        litellm_params:
+          model: azure/gpt-4.1
+          api_base: os.environ/LLM_API_BASE
+          api_key: os.environ/LLM_API_KEY
+    general_settings:
+      master_key: os.environ/MASTER_KEY
+    litellm_settings:
+      drop_params: true

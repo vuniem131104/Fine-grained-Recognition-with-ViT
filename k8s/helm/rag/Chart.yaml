@@ -1,0 +1,10 @@
+apiVersion: v2
+name: rag
+description: Helm chart for Bird RAG deployment
+type: application
+version: 0.1.0
+appVersion: "1.0.0"
+keywords:
+  - rag
+  - bird-rag
+  - deployment

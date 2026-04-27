@@ -30,10 +30,10 @@ class LiteLLMService:
             
     @cached_property
     def headers(self) -> dict[str, str]:
-        return {
-            "Content-Type": "application/json",
-            "Authorization": f"Bearer {self.litellm_setting.token.get_secret_value()}",
-        }
+        headers = {"Content-Type": "application/json"}
+        if self.litellm_setting.token:
+            headers["Authorization"] = f"Bearer {self.litellm_setting.token.get_secret_value()}"
+        return headers
     
     @property
     def _async_client(self) -> httpx.AsyncClient:

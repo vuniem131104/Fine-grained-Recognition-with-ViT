@@ -339,14 +339,14 @@ Eight Helm charts are provided in `k8s/helm/`:
 
 | Chart        | Namespace         | Description                                                                   |
 | ------------ | ----------------- | ----------------------------------------------------------------------------- |
-| `api`        | aide-production   | FastAPI backend with Cloud SQL Proxy sidecar, HPA (1–3 pods, 85% CPU target), nginx Ingress |
-| `frontend`   | aide-production   | Streamlit frontend with nginx Ingress                                        |
-| `serving`    | aide-production   | KServe InferenceService (PyTorch predictor, autoscale 0–3 replicas)          |
-| `grafana`    | aide-monitoring   | Dashboards (accumulated requests, model predictions)                         |
-| `loki`       | aide-monitoring   | Log aggregation (GCS backend, 7-day retention)                               |
-| `tempo`      | aide-monitoring   | Distributed tracing (GCS backend, 7-day retention)                           |
-| `prometheus` | aide-monitoring   | Metrics collection with remote write API                                     |
-| `alloy`      | aide-monitoring   | Grafana Alloy — pod log collection, OTLP trace/metric forwarding             |
+| `api`        | production   | FastAPI backend with Cloud SQL Proxy sidecar, HPA (1–3 pods, 85% CPU target), nginx Ingress |
+| `frontend`   | production   | Streamlit frontend with nginx Ingress                                        |
+| `serving`    | production   | KServe InferenceService (PyTorch predictor, autoscale 0–3 replicas)          |
+| `grafana`    | monitoring   | Dashboards (accumulated requests, model predictions)                         |
+| `loki`       | monitoring   | Log aggregation (GCS backend, 7-day retention)                               |
+| `tempo`      | monitoring   | Distributed tracing (GCS backend, 7-day retention)                           |
+| `prometheus` | monitoring   | Metrics collection with remote write API                                     |
+| `alloy`      | monitoring   | Grafana Alloy — pod log collection, OTLP trace/metric forwarding             |
 
 **Deploy a chart:**
 

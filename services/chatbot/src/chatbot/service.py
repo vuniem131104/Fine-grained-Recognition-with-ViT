@@ -31,6 +31,7 @@ class ChatbotSettings(BaseSettings):
         env_file=".env",
         env_file_encoding="utf-8",
         case_sensitive=False,
+        env_nested_delimiter="_",
         extra="ignore",
     )
 
@@ -45,7 +46,7 @@ class ChatbotSettings(BaseSettings):
             if yaml_path:
                 with open(yaml_path, "r") as f:
                     data = yaml.safe_load(f) or {}
-        
+
         super().__init__(**data)
     
     @staticmethod

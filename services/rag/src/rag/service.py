@@ -32,7 +32,7 @@ class ContextManagement:
         self.vector_size = vector_size
         self.top_k = top_k
         self.score_threshold = score_threshold
-        self.client = AsyncQdrantClient(url=qdrant_url, prefer_grpc=True, timeout=10)
+        self.client = AsyncQdrantClient(url=qdrant_url, api_key=os.getenv("QDRANT_CLOUD_API_KEY"), prefer_grpc=True, timeout=10)
         self.chunker_service = ChunkerService()
         self.embedding_client = AsyncAzureOpenAI(
             api_key=os.getenv("LLM_API_KEY"),
@@ -59,11 +59,11 @@ class ContextManagement:
     def get_all_records(self):
         try:
             connection = psycopg2.connect(
-                host=os.getenv("POSTGRES_HOST"),
-                database=os.getenv("POSTGRES_DB"),
-                user=os.getenv("POSTGRES_USER"),
-                password=os.getenv("POSTGRES_PASSWORD"),
-                port=os.getenv("POSTGRES_PORT")
+                host=os.getenv("POSTGRES_HOST", "localhost"),
+                database=os.getenv("POSTGRES_DB", ""),
+                user=os.getenv("POSTGRES_USER", ""),
+                password=os.getenv("POSTGRES_PASSWORD", ""),
+                port=os.getenv("POSTGRES_PORT", 5432)
             )
             cursor = connection.cursor()
             cursor.execute("SELECT url, species, content FROM wiki_documents;")

@@ -1,0 +1,22 @@
+namespace: llm
+
+litellm:
+  name: litellm
+  replicaCount: 1
+  image:
+    repository: ghcr.io/berriai/litellm
+    tag: main-latest
+    pullPolicy: IfNotPresent
+  port: 4000
+  resources:
+    requests:
+      cpu: "100m"
+      memory: "512Mi"
+    limits:
+      cpu: "1000m"
+      memory: "2Gi"
+
+service:
+  type: ClusterIP
+  port: 80
+  targetPort: 4000

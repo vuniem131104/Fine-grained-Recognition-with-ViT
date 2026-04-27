@@ -2,10 +2,9 @@
 apiVersion: networking.k8s.io/v1
 kind: Ingress
 metadata:
-  name: bird-classification-api-ingress
+  name: {{ .Values.ingress.name }}
   namespace: {{ .Values.namespace }}
   annotations:
-    nginx.ingress.kubernetes.io/rewrite-target: {{ .Values.ingress.rewriteTarget }}
     nginx.ingress.kubernetes.io/proxy-body-size: {{ .Values.ingress.maxBodySize }}
 spec:
   ingressClassName: {{ .Values.ingress.ingressClassName }}
@@ -17,7 +16,7 @@ spec:
         pathType: Prefix
         backend:
           service:
-            name: bird-classification-api
+            name: {{ .Values.rag.name }}
             port:
               number: {{ .Values.service.port }}
 {{- end }}

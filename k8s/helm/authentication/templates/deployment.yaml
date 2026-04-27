@@ -1,0 +1,49 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ .Values.authentication.name }}
+  namespace: {{ .Values.namespace }}
+  labels:
+    app: {{ .Values.authentication.name }}
+spec:
+  replicas: {{ .Values.authentication.replicaCount }}
+  selector:
+    matchLabels:
+      app: {{ .Values.authentication.name }}
+  template:
+    metadata:
+      labels:
+        app: {{ .Values.authentication.name }}
+    spec:
+      serviceAccountName: {{ .Values.serviceAccount.name }}
+      containers:
+      - name: {{ .Values.authentication.name }}
+        image: {{ .Values.authentication.image.repository }}:{{ .Values.authentication.image.tag }}
+        imagePullPolicy: {{ .Values.authentication.image.pullPolicy }}
+        ports:
+        - containerPort: {{ .Values.authentication.port }}
+          name: http
+        envFrom:
+        - secretRef:
+            name: authentication-secrets
+        env:
+        - name: PORT
+          value: "{{ .Values.authentication.port }}"
+        - name: WORKERS
+          value: "1"
+        resources:
+          {{- toYaml .Values.authentication.resources | nindent 10 }}
+      - name: cloud-sql-proxy
+        image: {{ .Values.cloudSqlProxy.image }}
+        args:
+          - "--structured-logs"
+          - "--auto-iam-authn"
+          - "--port={{ .Values.cloudSqlProxy.port }}"
+          - "$(CLOUD_SQL_INSTANCE)"
+        envFrom:
+        - secretRef:
+            name: authentication-secrets
+        securityContext:
+          runAsNonRoot: true
+        resources:
+          {{- toYaml .Values.cloudSqlProxy.resources | nindent 10 }}

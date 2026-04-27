@@ -2,6 +2,8 @@ from structlog import get_logger
 import httpx 
 from scipy.special import softmax
 import os
+from confluent_kafka import Producer
+import json
 
 import numpy as np
 

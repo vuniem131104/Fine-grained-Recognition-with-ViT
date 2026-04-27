@@ -1,7 +1,13 @@
 import axios from 'axios';
 
-const CHATBOT_API_URL = process.env.REACT_APP_CHATBOT_API_URL || 'http://localhost:8000';
-const AUTH_API_URL = process.env.REACT_APP_AUTH_API_URL || 'http://localhost:8001';
+const CHATBOT_API_URL =
+  (window.__ENV__ && window.__ENV__.REACT_APP_CHATBOT_API_URL) ||
+  process.env.REACT_APP_CHATBOT_API_URL ||
+  'http://localhost:8000';
+const AUTH_API_URL =
+  (window.__ENV__ && window.__ENV__.REACT_APP_AUTH_API_URL) ||
+  process.env.REACT_APP_AUTH_API_URL ||
+  'http://localhost:8001';
 const API_TIMEOUT = 30000;
 
 const authApi = axios.create({
