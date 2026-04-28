@@ -122,12 +122,12 @@ class ToolExecutorService:
         self._pending[request_id] = future
 
         message = json.dumps({"request_id": request_id, "img_b64": img_b64}).encode()
-        await self._producer.send_and_wait(
-            self.requests_topic, value=message, key=request_id.encode()
-        )
-        logger.info("Inference request produced", extra={"request_id": request_id})
 
         try:
+            await self._producer.send_and_wait(
+                self.requests_topic, value=message, key=request_id.encode()
+            )
+            logger.info("Inference request produced", extra={"request_id": request_id})
             return await asyncio.wait_for(future, timeout=self.request_timeout)
         except asyncio.TimeoutError:
             self._pending.pop(request_id, None)
